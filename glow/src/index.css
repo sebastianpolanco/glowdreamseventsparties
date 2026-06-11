@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Spline+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --accent-strong: #896ee1;
+  --accent-soft: #fb70b1;
+  --accent-dark: #b358e4;
+  --accent-sky: #9dd5f6;
+  --bg: #fefefe;
+  --text: #3b3551;
+  --text-soft: #60567e;
+  --card-bg: #ffffff;
+  --shadow-soft: 0 16px 30px -22px rgba(75, 58, 129, 0.45);
+  --shadow-strong: 0 22px 40px -18px rgba(75, 58, 129, 0.5);
+
+  --sans: 'Spline Sans', sans-serif;
+  --heading: 'Cinzel', serif;
+
+  font: 17px/160% var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+body.selector-active {
+  overflow: hidden;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+h1 {
+  font-size: clamp(2.6rem, 4vw, 4rem);
+  letter-spacing: 0.02em;
+}
+
+h2 {
+  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+}
+
+h3 {
+  font-size: 1.3rem;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--sans);
+}
