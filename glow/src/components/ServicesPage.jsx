@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import useScrolled from '../useScrolled'
 
 function ServicesPage({
   service,
@@ -11,6 +12,7 @@ function ServicesPage({
 }) {
   const [navOpen, setNavOpen] = useState(false)
   const closeNav = () => setNavOpen(false)
+  const scrolled = useScrolled()
 
   if (!service) {
     return null
@@ -21,7 +23,7 @@ function ServicesPage({
   return (
     <main className="services-page">
       <header className="page-hero">
-        <div className="page-hero__top">
+        <div className={`page-hero__top${scrolled ? ' page-hero__top--scrolled' : ''}`}>
           <a
             className="page-brand"
             href="#home"

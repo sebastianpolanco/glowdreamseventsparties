@@ -30,7 +30,19 @@ function Home({
 
   const [slideIndex, setSlideIndex] = useState(0)
   const [navOpen, setNavOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const closeNav = () => setNavOpen(false)
+
+  // Transparent nav at the top, frosted background once the page is scrolled.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    const id = requestAnimationFrame(onScroll) // sync initial state (deferred)
+    return () => {
+      cancelAnimationFrame(id)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
 
   useEffect(() => {
     setSlideIndex(0)
@@ -57,7 +69,7 @@ function Home({
           ))}
         </div>
         <div className="hero__overlay"></div>
-        <div className="hero__nav">
+        <div className={`hero__nav${scrolled ? ' hero__nav--scrolled' : ''}`}>
           <a className="hero__brand" href="#home">
             <img className="hero__logo" src="/logo.png" alt="Glow Dreams" />
             <span className="hero__brand-title">Glow Dreams Parties & Events</span>

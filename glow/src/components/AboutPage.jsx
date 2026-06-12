@@ -1,10 +1,13 @@
+import useScrolled from '../useScrolled'
+
 function AboutPage({ cards = [], gallery = [], onNavigateHomeSection, onNavigateServices, onNavigateContact, onChangeExperience }) {
   const year = new Date().getFullYear()
+  const scrolled = useScrolled()
 
   return (
     <main className="about-page">
       <header className="page-hero">
-        <div className="page-hero__top">
+        <div className={`page-hero__top${scrolled ? ' page-hero__top--scrolled' : ''}`}>
           <a
             className="page-brand"
             href="#home"

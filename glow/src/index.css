@@ -28,6 +28,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-top: 90px;
+}
+
 body {
   margin: 0;
 }
