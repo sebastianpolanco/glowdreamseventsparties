@@ -42,6 +42,26 @@ function AdminContact({ data, onSave }) {
           Instagram URL
           <input type="text" value={form.instagramUrl || ''} onChange={set('instagramUrl')} className="admin-input" placeholder="https://instagram.com/yourhandle" />
         </label>
+        <label className="admin-label">
+          TikTok Handle
+          <input type="text" value={form.tiktok || ''} onChange={set('tiktok')} className="admin-input" placeholder="@yourhandle" />
+        </label>
+        <label className="admin-label">
+          TikTok URL
+          <input type="text" value={form.tiktokUrl || ''} onChange={set('tiktokUrl')} className="admin-input" placeholder="https://www.tiktok.com/@yourhandle" />
+        </label>
+        <label className="admin-label">
+          Location
+          <input type="text" value={form.location || ''} onChange={set('location')} className="admin-input" placeholder="e.g. Area DMV" />
+        </label>
+        <label className="admin-label">
+          Location Detail
+          <input type="text" value={form.locationDetail || ''} onChange={set('locationDetail')} className="admin-input" placeholder="e.g. Washington DC · Maryland · Virginia" />
+        </label>
+        <label className="admin-label">
+          Location Map URL (optional)
+          <input type="text" value={form.locationUrl || ''} onChange={set('locationUrl')} className="admin-input" placeholder="https://maps.google.com/…" />
+        </label>
       </div>
 
       <div className="admin-actions">

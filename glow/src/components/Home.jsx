@@ -5,6 +5,8 @@ function Home({
   summary,
   packages = [],
   heroBackground,
+  reviews = { items: [], googleUrl: '', writeUrl: '' },
+  contactInfo = {},
   onNavigateServices,
   onNavigateAbout,
   onNavigateContact,
@@ -17,6 +19,14 @@ function Home({
   const images = Array.isArray(heroBackground)
     ? heroBackground.filter(Boolean)
     : [heroBackground].filter(Boolean)
+
+  const reviewItems = Array.isArray(reviews?.items) ? reviews.items : []
+  const [reviewIndex, setReviewIndex] = useState(0)
+  // Wrap safely even if the list shrinks — no effect needed.
+  const currentReview = reviewItems.length
+    ? reviewItems[((reviewIndex % reviewItems.length) + reviewItems.length) % reviewItems.length]
+    : null
+  const showReview = (step) => setReviewIndex((i) => i + step)
 
   const [slideIndex, setSlideIndex] = useState(0)
   const [navOpen, setNavOpen] = useState(false)
@@ -83,10 +93,10 @@ function Home({
           <h1 className="hero__title">{title}</h1>
           <p className="hero__caption">{summary}</p>
           <div className="hero__actions">
-            <button type="button" className="primary">
-              Book your date
+            <button type="button" className="primary" onClick={onNavigateServices}>
+              Explore packages
             </button>
-            <button type="button" className="ghost">
+            <button type="button" className="ghost" onClick={onNavigateContact}>
               Contact us
             </button>
           </div>
@@ -114,6 +124,19 @@ function Home({
             package to plan the glow level you want.
           </p>
         </div>
+
+        <article className="spa-includes">
+          <h3 className="spa-includes__title">All Spa Party Packages Include:</h3>
+          <ul className="spa-includes__list">
+            <li>Complete Spa Party setup.</li>
+            <li>Spa Party Hosts.</li>
+            <li>Special robe for the Birthday Girl and robe for her guests.</li>
+            <li>Karaoke machine for extra fun.</li>
+            <li>Gift Bags.</li>
+            <li>Headbands for facial treatments.</li>
+          </ul>
+        </article>
+
         <div className="packages-summary">
           {previewPackages.map((pack) => (
             <article key={pack.name} className="package-summary-card">
@@ -128,8 +151,8 @@ function Home({
                   ))}
                 </ul>
               )}
-              <button type="button" className="ghost">
-                Reserve this
+              <button type="button" className="ghost" onClick={onNavigateServices}>
+                Details
               </button>
             </article>
           ))}
@@ -138,22 +161,87 @@ function Home({
 
       <section id="review" className="home-section home-section--review">
         <div className="home-section__header">
-          <h2>Guest review</h2>
-          <p>One highlight from our latest celebration.</p>
+          <h2>Guest reviews</h2>
+          <p>What our guests say about their celebrations.</p>
         </div>
-        <article className="review-card">
-          <p className="review-card__quote">
-            "The glow lounge felt like a dream. Every station was magical, and
-            the team handled every detail with so much care."
-          </p>
-          <div className="review-card__author">
-            <div>
-              <h3>Isabella R.</h3>
-              <span>Birthday celebration</span>
-            </div>
-            <span className="review-card__rating">5.0</span>
+
+        {currentReview ? (
+          <div className="review-carousel">
+            {reviewItems.length > 1 && (
+              <button
+                type="button"
+                className="review-carousel__arrow review-carousel__arrow--prev"
+                onClick={() => showReview(-1)}
+                aria-label="Previous review"
+              >
+                ‹
+              </button>
+            )}
+
+            <article className="review-card">
+              <p className="review-card__quote">"{currentReview.text}"</p>
+              <div className="review-card__author">
+                <div>
+                  <h3>{currentReview.name}</h3>
+                  {currentReview.role && <span>{currentReview.role}</span>}
+                </div>
+                {currentReview.rating != null && (
+                  <span className="review-card__rating">
+                    {Number(currentReview.rating).toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </article>
+
+            {reviewItems.length > 1 && (
+              <button
+                type="button"
+                className="review-carousel__arrow review-carousel__arrow--next"
+                onClick={() => showReview(1)}
+                aria-label="Next review"
+              >
+                ›
+              </button>
+            )}
           </div>
-        </article>
+        ) : (
+          <p className="review-empty">No reviews yet — be the first to share yours!</p>
+        )}
+
+        {reviewItems.length > 1 && (
+          <div className="review-dots">
+            {reviewItems.map((_, i) => {
+              const active = ((reviewIndex % reviewItems.length) + reviewItems.length) % reviewItems.length === i
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`review-dot${active ? ' review-dot--active' : ''}`}
+                  onClick={() => setReviewIndex(i)}
+                  aria-label={`Review ${i + 1}`}
+                />
+              )
+            })}
+          </div>
+        )}
+
+        <div className="review-actions">
+          {reviews?.googleUrl && (
+            <a className="primary" href={reviews.googleUrl} target="_blank" rel="noreferrer">
+              See all reviews
+            </a>
+          )}
+          {(reviews?.writeUrl || reviews?.googleUrl) && (
+            <a
+              className="ghost"
+              href={reviews.writeUrl || reviews.googleUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Write a review
+            </a>
+          )}
+        </div>
       </section>
 
       <section id="contact" className="home-section home-section--contact">
@@ -162,26 +250,37 @@ function Home({
           <p>Choose the channel that feels the most effortless.</p>
         </div>
         <div className="contact-cards">
-          <a className="contact-card" href="sms:+15550199">
-            <h3>iMessage</h3>
-            <p>Text us your date and we will reply within the hour.</p>
-            <span>+1 (555) 0199</span>
-          </a>
-          <a
-            className="contact-card"
-            href="https://instagram.com/glowdreams"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <h3>Instagram</h3>
-            <p>Send a DM and see the latest glow moments.</p>
-            <span>@glowdreams</span>
-          </a>
-          <a className="contact-card" href="mailto:hello@glowdreams.com">
-            <h3>Email</h3>
-            <p>Share your vision and we will craft a proposal.</p>
-            <span>hello@glowdreams.com</span>
-          </a>
+          {contactInfo.phone && (
+            <a className="contact-card" href={`sms:${contactInfo.phone.replace(/[^\d+]/g, '')}`}>
+              <h3>iMessage</h3>
+              <p>Text us your date and we will reply within the hour.</p>
+              <span>{contactInfo.phone}</span>
+            </a>
+          )}
+          {contactInfo.instagram && (
+            <a
+              className="contact-card"
+              href={contactInfo.instagramUrl || `https://instagram.com/${contactInfo.instagram.replace(/^@/, '')}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <h3>Instagram</h3>
+              <p>Send a DM and see the latest glow moments.</p>
+              <span>{contactInfo.instagram}</span>
+            </a>
+          )}
+          {contactInfo.email && (
+            <a
+              className="contact-card"
+              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(contactInfo.email)}&su=${encodeURIComponent('Consulta - Glow Dreams')}&body=${encodeURIComponent('Hola Glow Dreams,\n\nTengo algunas dudas sobre sus servicios:\n\n')}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <h3>Email</h3>
+              <p>Share your vision and we will craft a proposal.</p>
+              <span>{contactInfo.email}</span>
+            </a>
+          )}
         </div>
       </section>
 

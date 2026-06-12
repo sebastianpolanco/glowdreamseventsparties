@@ -55,9 +55,9 @@ const SERVICES_DEFAULT = [
       },
     ],
     additions: [
-      { title: 'Coreografia sorpresa', price: '$180', image: '/hero.png' },
-      { title: 'Makeup station',       price: '$140', image: '/hero.png' },
-      { title: 'Neon dessert table',   price: '$110', image: '/hero.png' },
+      { title: 'Coreografia sorpresa', price: '$180', image: '/hero.png', description: 'Una coreografia preparada para sorprender a la homenajeada.' },
+      { title: 'Makeup station',       price: '$140', image: '/hero.png', description: 'Estacion de maquillaje y glam para las invitadas.' },
+      { title: 'Neon dessert table',   price: '$110', image: '/hero.png', description: 'Mesa de postres con detalles neon e iluminacion.' },
     ],
   },
   {
@@ -103,9 +103,9 @@ const SERVICES_DEFAULT = [
       },
     ],
     additions: [
-      { title: 'Perfume bar personalizado', price: '$120', image: '/hero.png' },
-      { title: 'Photobooth floral',         price: '$150', image: '/hero.png' },
-      { title: 'Velas y cards de afirmacion', price: '$90', image: '/hero.png' },
+      { title: 'Perfume bar personalizado', price: '$120', image: '/hero.png', description: 'Cada invitada crea su propia fragancia para llevar.' },
+      { title: 'Photobooth floral',         price: '$150', image: '/hero.png', description: 'Rincon floral con props para fotos inolvidables.' },
+      { title: 'Velas y cards de afirmacion', price: '$90', image: '/hero.png', description: 'Velas aromaticas y tarjetas de afirmacion como recuerdo.' },
     ],
   },
   {
@@ -151,9 +151,9 @@ const SERVICES_DEFAULT = [
       },
     ],
     additions: [
-      { title: 'Outfits y accesorios fantasy', price: '$130', image: '/hero.png' },
-      { title: 'Candy cart y algodon',          price: '$95',  image: '/hero.png' },
-      { title: 'Video highlight corto',          price: '$160', image: '/hero.png' },
+      { title: 'Outfits y accesorios fantasy', price: '$130', image: '/hero.png', description: 'Vestuario y accesorios de fantasia para la sesion.' },
+      { title: 'Candy cart y algodon',          price: '$95',  image: '/hero.png', description: 'Carrito de dulces y algodon de azucar para los invitados.' },
+      { title: 'Video highlight corto',          price: '$160', image: '/hero.png', description: 'Video corto con los mejores momentos del evento.' },
     ],
   },
 ]
@@ -184,11 +184,44 @@ const DEFAULT_ABOUT_CARDS = [
 
 const DEFAULT_GALLERY = ['/hero.png', '/hero.png', '/hero.png', '/hero.png']
 
+const DEFAULT_REVIEWS = {
+  items: [
+    {
+      name: 'Maria Gonzalez',
+      role: 'Sweet 16 party',
+      rating: 5,
+      text: 'Glow Dreams made my daughter\'s party absolutely magical. Every detail was perfect!',
+      image: '',
+    },
+    {
+      name: 'Carla Ramirez',
+      role: 'Spa Premium',
+      rating: 5,
+      text: 'The spa experience was so relaxing and elegant. The girls loved every minute of it.',
+      image: '',
+    },
+  ],
+  // Google Business links — owner pastes these from the admin panel.
+  googleUrl: 'https://share.google/4LC7DXgVjoY2ZaVJO',
+  writeUrl: '',
+}
+
+// Accepts the old array shape too, so existing Firestore data keeps working.
+const normalizeReviews = (d) =>
+  Array.isArray(d)
+    ? { items: d, googleUrl: '', writeUrl: '' }
+    : { items: [], googleUrl: '', writeUrl: '', ...d }
+
 const DEFAULT_CONTACT_INFO = {
   phone: '910-899-6458',
   email: 'glowdreamsevents@gmail.com',
   instagram: '@glowdreamsevents',
   instagramUrl: 'https://instagram.com/glowdreamsevents',
+  tiktok: '@glow.dreams.event',
+  tiktokUrl: 'https://www.tiktok.com/@glow.dreams.event',
+  location: 'Area DMV',
+  locationDetail: 'Washington DC · Maryland · Virginia',
+  locationUrl: '',
 }
 
 const siteDoc = (field) => doc(db, 'site', field)
@@ -197,6 +230,7 @@ const isAdminPath = () => window.location.pathname.startsWith('/admin')
 
 function App() {
   const [activeServiceId, setActiveServiceId] = useState(null)
+  const [selectedPackage, setSelectedPackage] = useState('')
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false)
 
@@ -218,6 +252,7 @@ function App() {
   const [services, setServices] = useState(SERVICES_DEFAULT)
   const [galleryImages, setGalleryImages] = useState(DEFAULT_GALLERY)
   const [aboutCards, setAboutCards] = useState(DEFAULT_ABOUT_CARDS)
+  const [reviews, setReviews] = useState(DEFAULT_REVIEWS)
   const [contactInfo, setContactInfo] = useState(DEFAULT_CONTACT_INFO)
 
   // Real-time listener — each section lives in its own doc to stay under Firestore's 1 MB limit
@@ -233,6 +268,7 @@ function App() {
             case 'services': setServices(d);        break
             case 'gallery':  setGalleryImages(d);   break
             case 'about':    setAboutCards(d);       break
+            case 'reviews':  setReviews(normalizeReviews(d)); break
             case 'contact':  setContactInfo(d);      break
           }
         })
@@ -294,6 +330,11 @@ function App() {
   const navigateToServices = () => { setPage('services'); window.history.pushState(null, '', '#services') }
   const navigateToAbout    = () => { setPage('about');    window.history.pushState(null, '', '#about') }
   const navigateToContact  = () => { setPage('contact');  window.history.pushState(null, '', '#contact') }
+  const handleSelectPackage = (packageName) => {
+    setSelectedPackage(packageName)
+    setPage('contact')
+    window.history.pushState(null, '', '#contact')
+  }
   const handleChangeExperience = () => {
     setPage('home')
     setActiveServiceId(null)
@@ -320,6 +361,8 @@ function App() {
         onSaveGallery={persist('gallery', setGalleryImages)}
         aboutCards={aboutCards}
         onSaveAbout={persist('about', setAboutCards)}
+        reviews={reviews}
+        onSaveReviews={persist('reviews', setReviews)}
         contactInfo={contactInfo}
         onSaveContact={persist('contact', setContactInfo)}
         onLogout={handleAdminLogout}
@@ -342,6 +385,8 @@ function App() {
                 summary={activeService.summary}
                 packages={activeService.packages}
                 heroBackground={heroBackgrounds[activeService.id]}
+                reviews={reviews}
+                contactInfo={contactInfo}
                 onNavigateServices={navigateToServices}
                 onNavigateAbout={navigateToAbout}
                 onNavigateContact={navigateToContact}
@@ -360,6 +405,7 @@ function App() {
               onNavigateServices={navigateToServices}
               onNavigateAbout={navigateToAbout}
               onNavigateContact={navigateToContact}
+              onSelectPackage={handleSelectPackage}
               onChangeExperience={handleChangeExperience}
             />
           )}
@@ -377,6 +423,7 @@ function App() {
             <ContactPage
               service={activeService}
               contactInfo={contactInfo}
+              selectedPackage={selectedPackage}
               onNavigateHomeSection={navigateToHomeSection}
               onNavigateServices={navigateToServices}
               onNavigateAbout={navigateToAbout}

@@ -6,6 +6,7 @@ function ServicesPage({
   onNavigateServices,
   onNavigateAbout,
   onNavigateContact,
+  onSelectPackage,
   onChangeExperience,
 }) {
   const [navOpen, setNavOpen] = useState(false)
@@ -108,6 +109,14 @@ function ServicesPage({
               {pack.tagline && (
                 <p className="menu-card__tagline">{pack.tagline}</p>
               )}
+
+              <button
+                type="button"
+                className="menu-card__select primary"
+                onClick={() => onSelectPackage?.(pack.name)}
+              >
+                Select
+              </button>
             </article>
           ))}
         </div>
@@ -124,6 +133,7 @@ function ServicesPage({
               <article key={item.title} className="services-card services-card--package">
                 <img className="services-card__image" src={item.image} alt={item.title} />
                 <h3>{item.title}</h3>
+                {item.description && <p className="services-card__desc">{item.description}</p>}
                 <p className="services-card__price">{item.price}</p>
               </article>
             ))}

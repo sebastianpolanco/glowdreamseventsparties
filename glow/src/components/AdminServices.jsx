@@ -12,8 +12,14 @@ const EMPTY_PACKAGE = {
   includes: [],
 }
 
+const EMPTY_ADDITION = { title: '', price: '', description: '', image: '' }
+
 function AdminServices({ data, onSave }) {
-  const [services, setServices] = useState(data.map((s) => ({ ...s, packages: s.packages.map((p) => ({ ...p })) })))
+  const [services, setServices] = useState(data.map((s) => ({
+    ...s,
+    packages: s.packages.map((p) => ({ ...p })),
+    additions: (s.additions || []).map((a) => ({ ...a })),
+  })))
   const [activeIdx, setActiveIdx] = useState(0)
   const [status, setStatus] = useState(null)
 
@@ -36,6 +42,24 @@ function AdminServices({ data, onSave }) {
     setServices(services.map((s, i) => i !== activeIdx ? s : {
       ...s,
       packages: s.packages.filter((_, pi) => pi !== pIdx),
+    }))
+
+  const updateAddition = (aIdx, field, value) =>
+    setServices(services.map((s, i) => i !== activeIdx ? s : {
+      ...s,
+      additions: s.additions.map((a, ai) => ai !== aIdx ? a : { ...a, [field]: value }),
+    }))
+
+  const addAddition = () =>
+    setServices(services.map((s, i) => i !== activeIdx ? s : {
+      ...s,
+      additions: [...(s.additions || []), { ...EMPTY_ADDITION }],
+    }))
+
+  const removeAddition = (aIdx) =>
+    setServices(services.map((s, i) => i !== activeIdx ? s : {
+      ...s,
+      additions: s.additions.filter((_, ai) => ai !== aIdx),
     }))
 
   const movePackage = (pIdx, dir) => {
@@ -166,6 +190,50 @@ function AdminServices({ data, onSave }) {
 
       {service.packages.length === 0 && (
         <p className="admin-empty-msg">No packages yet. Click "+ Add Package" to create one.</p>
+      )}
+
+      <div className="admin-packages-header">
+        <h3 className="admin-section__sub-title">Add-ons ({(service.additions || []).length})</h3>
+        <button type="button" className="admin-add-btn" onClick={addAddition}>+ Add Add-on</button>
+      </div>
+
+      <div className="admin-grid admin-grid--3">
+        {(service.additions || []).map((item, aIdx) => (
+          <div key={aIdx} className="admin-card admin-card--package">
+            <div className="admin-card__pkg-header">
+              <span className="admin-card__pkg-num">#{aIdx + 1}</span>
+              <button
+                type="button"
+                className="admin-remove-btn"
+                onClick={() => removeAddition(aIdx)}
+                title="Delete add-on"
+              >✕ Remove</button>
+            </div>
+
+            <label className="admin-label">
+              Title
+              <input type="text" value={item.title} onChange={(e) => updateAddition(aIdx, 'title', e.target.value)} className="admin-input" />
+            </label>
+            <label className="admin-label">
+              Price
+              <input type="text" value={item.price || ''} onChange={(e) => updateAddition(aIdx, 'price', e.target.value)} className="admin-input" placeholder="e.g. $120" />
+            </label>
+            <label className="admin-label">
+              Description
+              <textarea rows="3" value={item.description || ''} onChange={(e) => updateAddition(aIdx, 'description', e.target.value)} className="admin-input" />
+            </label>
+            <label className="admin-label">Image</label>
+            <ImageUploader
+              value={item.image}
+              onChange={(url) => updateAddition(aIdx, 'image', url)}
+              folder="services"
+            />
+          </div>
+        ))}
+      </div>
+
+      {(service.additions || []).length === 0 && (
+        <p className="admin-empty-msg">No add-ons yet. Click "+ Add Add-on" to create one.</p>
       )}
 
       <div className="admin-actions">

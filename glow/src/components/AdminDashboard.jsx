@@ -4,12 +4,14 @@ import AdminServices from './AdminServices'
 import AdminGallery from './AdminGallery'
 import AdminAbout from './AdminAbout'
 import AdminContact from './AdminContact'
+import AdminReviews from './AdminReviews'
 
 const SECTIONS = [
   { id: 'hero',     label: 'Hero Images' },
   { id: 'services', label: 'Services' },
   { id: 'gallery',  label: 'Gallery' },
   { id: 'about',    label: 'About Us' },
+  { id: 'reviews',  label: 'Reviews' },
   { id: 'contact',  label: 'Contact Info' },
 ]
 
@@ -18,6 +20,7 @@ function AdminDashboard({
   services, onSaveServices,
   galleryImages, onSaveGallery,
   aboutCards, onSaveAbout,
+  reviews, onSaveReviews,
   contactInfo, onSaveContact,
   onLogout,
 }) {
@@ -52,6 +55,7 @@ function AdminDashboard({
         {active === 'services' && <AdminServices data={services}        onSave={onSaveServices} />}
         {active === 'gallery'  && <AdminGallery  data={galleryImages}   onSave={onSaveGallery} />}
         {active === 'about'    && <AdminAbout    data={aboutCards}      onSave={onSaveAbout} />}
+        {active === 'reviews'  && <AdminReviews  data={reviews}         onSave={onSaveReviews} />}
         {active === 'contact'  && <AdminContact  data={contactInfo}     onSave={onSaveContact} />}
       </main>
     </div>
