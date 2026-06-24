@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
+import { useConfirm } from './ConfirmDialog'
 
 const emptyReview = () => ({ name: '', role: '', rating: 5, text: '', image: '' })
 
@@ -28,9 +29,13 @@ function AdminReviews({ data, onSave }) {
   const [googleUrl, setGoogleUrl] = useState(initial.googleUrl || '')
   const [writeUrl, setWriteUrl] = useState(initial.writeUrl || '')
   const [status, setStatus] = useState(null)
+  const confirm = useConfirm()
 
   const add = () => setReviews([emptyReview(), ...reviews])
-  const remove = (idx) => setReviews(reviews.filter((_, i) => i !== idx))
+  const remove = async (idx) => {
+    if (!(await confirm('Remove this review? This action cannot be undone.'))) return
+    setReviews(reviews.filter((_, i) => i !== idx))
+  }
   const update = (idx, field, value) =>
     setReviews(reviews.map((r, i) => (i !== idx ? r : { ...r, [field]: value })))
 

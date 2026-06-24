@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function Home({
   title,
@@ -11,7 +11,6 @@ function Home({
   onNavigateAbout,
   onNavigateContact,
   onChangeExperience,
-  onNavigateAdmin,
 }) {
   const year = new Date().getFullYear()
   const previewPackages = packages
@@ -21,12 +20,15 @@ function Home({
     : [heroBackground].filter(Boolean)
 
   const reviewItems = Array.isArray(reviews?.items) ? reviews.items : []
-  const [reviewIndex, setReviewIndex] = useState(0)
-  // Wrap safely even if the list shrinks — no effect needed.
-  const currentReview = reviewItems.length
-    ? reviewItems[((reviewIndex % reviewItems.length) + reviewItems.length) % reviewItems.length]
-    : null
-  const showReview = (step) => setReviewIndex((i) => i + step)
+  const reviewTrackRef = useRef(null)
+  // Scroll the track by roughly one card (card width + gap) in either direction.
+  const scrollReviews = (dir) => {
+    const track = reviewTrackRef.current
+    if (!track) return
+    const card = track.querySelector('.review-card')
+    const amount = card ? card.offsetWidth + 16 : track.clientWidth
+    track.scrollBy({ left: dir * amount, behavior: 'smooth' })
+  }
 
   const [slideIndex, setSlideIndex] = useState(0)
   const [navOpen, setNavOpen] = useState(false)
@@ -177,40 +179,54 @@ function Home({
           <p>What our guests say about their celebrations.</p>
         </div>
 
-        {currentReview ? (
-          <div className="review-carousel">
-            {reviewItems.length > 1 && (
+        {reviewItems.length ? (
+          <div className="review-slider">
+            {reviewItems.length > 3 && (
               <button
                 type="button"
                 className="review-carousel__arrow review-carousel__arrow--prev"
-                onClick={() => showReview(-1)}
-                aria-label="Previous review"
+                onClick={() => scrollReviews(-1)}
+                aria-label="Previous reviews"
               >
                 ‹
               </button>
             )}
 
-            <article className="review-card">
-              <p className="review-card__quote">"{currentReview.text}"</p>
-              <div className="review-card__author">
-                <div>
-                  <h3>{currentReview.name}</h3>
-                  {currentReview.role && <span>{currentReview.role}</span>}
-                </div>
-                {currentReview.rating != null && (
-                  <span className="review-card__rating">
-                    {Number(currentReview.rating).toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </article>
+            <div className="review-track" ref={reviewTrackRef}>
+              {reviewItems.map((review, i) => (
+                <article className="review-card" key={i}>
+                  <p className="review-card__quote">"{review.text}"</p>
+                  <div className="review-card__author">
+                    <div>
+                      <h3>{review.name}</h3>
+                      {review.role && <span>{review.role}</span>}
+                    </div>
+                    {review.rating != null && (
+                      <span
+                        className="review-card__rating"
+                        aria-label={`${Number(review.rating).toFixed(1)} out of 5`}
+                      >
+                        <span
+                          className="review-stars"
+                          style={{ '--rating': Number(review.rating) }}
+                          aria-hidden="true"
+                        />
+                        <span className="review-card__rating-num">
+                          {Number(review.rating).toFixed(1)}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
 
-            {reviewItems.length > 1 && (
+            {reviewItems.length > 3 && (
               <button
                 type="button"
                 className="review-carousel__arrow review-carousel__arrow--next"
-                onClick={() => showReview(1)}
-                aria-label="Next review"
+                onClick={() => scrollReviews(1)}
+                aria-label="Next reviews"
               >
                 ›
               </button>
@@ -218,23 +234,6 @@ function Home({
           </div>
         ) : (
           <p className="review-empty">No reviews yet — be the first to share yours!</p>
-        )}
-
-        {reviewItems.length > 1 && (
-          <div className="review-dots">
-            {reviewItems.map((_, i) => {
-              const active = ((reviewIndex % reviewItems.length) + reviewItems.length) % reviewItems.length === i
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  className={`review-dot${active ? ' review-dot--active' : ''}`}
-                  onClick={() => setReviewIndex(i)}
-                  aria-label={`Review ${i + 1}`}
-                />
-              )
-            })}
-          </div>
         )}
 
         <div className="review-actions">
@@ -300,9 +299,6 @@ function Home({
         <img className="home-footer__logo" src="/logo.png" alt="Glow Dreams" />
         <p className="home-footer__phrase">Every celebration deserves a glow.</p>
         <span className="home-footer__copy">Copyright {year} Glow Dreams</span>
-        <button type="button" className="home-footer__admin" onClick={onNavigateAdmin}>
-          Admin
-        </button>
       </footer>
     </>
   )

@@ -1,27 +1,19 @@
-function Selector({ services, onSelect }) {
-  const handlePanelEnter = (event) => {
-    const video = event.currentTarget.querySelector('video')
+const SELECTOR_BACKGROUND_VIDEO = '/Spapremium.MOV'
 
-    if (!video) {
-      return
-    }
-
-    video.play().catch(() => {})
-  }
-
-  const handlePanelLeave = (event) => {
-    const video = event.currentTarget.querySelector('video')
-
-    if (!video) {
-      return
-    }
-
-    video.pause()
-    video.currentTime = 0
-  }
-
+function Selector({ services, onSelect, loaded = true }) {
   return (
     <main className="selector selector--split">
+      <video
+        className="selector__background"
+        src={SELECTOR_BACKGROUND_VIDEO}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      />
+      <div className="selector__backdrop" aria-hidden="true" />
       <header className="selector__overlay">
         <img className="selector__logo" src="/logo.png" alt="Glow Dreams" />
         <p className="lead">
@@ -29,32 +21,16 @@ function Selector({ services, onSelect }) {
           curated to feel magical, elegant, and unforgettable.
         </p>
       </header>
-      <div className="selector__grid selector__grid--split">
-        {services.map((service, index) => (
+      <div
+        className={`selector__grid selector__grid--split${
+          loaded ? ' is-loaded' : ''
+        }`}
+      >
+        {loaded && services.map((service, index) => (
           <div
             key={service.id}
             className={`service-panel service-panel--${index + 1}`}
-            onPointerEnter={handlePanelEnter}
-            onPointerLeave={handlePanelLeave}
           >
-            {service.backgroundMedia?.type === 'video' ? (
-              <video
-                className="service-panel__media"
-                src={service.backgroundMedia.src}
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                aria-hidden="true"
-              />
-            ) : (
-              <img
-                className="service-panel__media"
-                src={service.backgroundMedia?.src}
-                alt=""
-                aria-hidden="true"
-              />
-            )}
             <div className="service-panel__content">
               <div className="service-card">
                 <div className="service-card__tag">Select</div>

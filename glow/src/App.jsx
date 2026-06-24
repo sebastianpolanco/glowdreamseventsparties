@@ -7,6 +7,7 @@ import ContactPage from './components/ContactPage'
 import Home from './components/Home'
 import Selector from './components/Selector'
 import ServicesPage from './components/ServicesPage'
+import FloatingContact from './components/FloatingContact'
 import Login from './components/login'
 import AdminDashboard from './components/AdminDashboard'
 import './App.css'
@@ -19,8 +20,8 @@ const SERVICES_DEFAULT = [
     summary:
       'Lighting, sound, welcome set, and interactive stations for an unforgettable party.',
     backgroundMedia: {
-      type: 'image',
-      src: '/exppremium.JPG',
+      type: 'video',
+      src: '/Spapremium.MOV',
     },
     packages: [
       {
@@ -115,8 +116,8 @@ const SERVICES_DEFAULT = [
     summary:
       'A kids lounge with a playful ceremony, dresses, mini banquet, and lots of glamour.',
     backgroundMedia: {
-      type: 'image',
-      src: '/kids.JPEG',
+      type: 'video',
+      src: '/Spapremium.MOV',
     },
     packages: [
       {
@@ -255,6 +256,10 @@ function App() {
   const [reviews, setReviews] = useState(DEFAULT_REVIEWS)
   const [contactInfo, setContactInfo] = useState(DEFAULT_CONTACT_INFO)
 
+  // False until Firestore answers for the first time, so we don't flash the
+  // default (placeholder) text before the real content arrives.
+  const [dataLoaded, setDataLoaded] = useState(false)
+
   // Real-time listener — each section lives in its own doc to stay under Firestore's 1 MB limit
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -272,8 +277,13 @@ function App() {
             case 'contact':  setContactInfo(d);      break
           }
         })
+        setDataLoaded(true)
       },
-      (err) => console.error('Firestore listener error:', err)
+      (err) => {
+        console.error('Firestore listener error:', err)
+        // Fall back to defaults rather than leaving the page blank forever.
+        setDataLoaded(true)
+      }
     )
     return () => unsubscribe()
   }, [])
@@ -303,6 +313,11 @@ function App() {
     document.body.classList.add('selector-active')
     return () => document.body.classList.remove('selector-active')
   }, [activeServiceId])
+
+  // When switching between pages, start the new page from the top.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [page])
 
   // Each section is saved to its own Firestore document: site/hero, site/services, etc.
   // This keeps each doc well under the 1 MB limit even with Base64 images.
@@ -373,7 +388,7 @@ function App() {
   return (
     <div className="page">
       {!activeService && (
-        <Selector services={services} onSelect={setActiveServiceId} />
+        <Selector services={services} onSelect={setActiveServiceId} loaded={dataLoaded} />
       )}
 
       {activeService && (
@@ -391,10 +406,6 @@ function App() {
                 onNavigateAbout={navigateToAbout}
                 onNavigateContact={navigateToContact}
                 onChangeExperience={handleChangeExperience}
-                onNavigateAdmin={() => {
-                  window.history.pushState(null, '', '/admin')
-                  setPage('admin-login')
-                }}
               />
             </main>
           )}
@@ -430,6 +441,7 @@ function App() {
               onChangeExperience={handleChangeExperience}
             />
           )}
+          <FloatingContact contactInfo={contactInfo} />
         </>
       )}
     </div>

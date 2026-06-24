@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
+import { useConfirm } from './ConfirmDialog'
 
 function AdminGallery({ data, onSave }) {
   const [images, setImages] = useState([...data])
   const [status, setStatus] = useState(null)
+  const confirm = useConfirm()
 
   const add = () => setImages([...images, ''])
-  const remove = (idx) => setImages(images.filter((_, i) => i !== idx))
+  const remove = async (idx) => {
+    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
+    setImages(images.filter((_, i) => i !== idx))
+  }
   const update = (idx, val) => setImages(images.map((img, i) => (i === idx ? val : img)))
 
   const handleSave = async () => {

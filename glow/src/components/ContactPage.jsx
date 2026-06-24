@@ -13,6 +13,8 @@ function ContactPage({ service, contactInfo = {}, selectedPackage = '', onNaviga
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [attempted, setAttempted] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
+  const closeNav = () => setNavOpen(false)
 
   // Local YYYY-MM-DD strings — date inputs compare lexicographically in this format.
   const today = new Date()
@@ -129,24 +131,30 @@ function ContactPage({ service, contactInfo = {}, selectedPackage = '', onNaviga
             <img src="/logo.png" alt="Glow Dreams" />
             <span>Glow Dreams Parties & Events</span>
           </a>
-          <nav className="nav">
+          <button type="button" className="nav__toggle" onClick={() => setNavOpen(!navOpen)} aria-label="Toggle menu">
+            <span className={navOpen ? 'nav__toggle-bar nav__toggle-bar--1 open' : 'nav__toggle-bar nav__toggle-bar--1'} />
+            <span className={navOpen ? 'nav__toggle-bar nav__toggle-bar--2 open' : 'nav__toggle-bar nav__toggle-bar--2'} />
+            <span className={navOpen ? 'nav__toggle-bar nav__toggle-bar--3 open' : 'nav__toggle-bar nav__toggle-bar--3'} />
+          </button>
+          {navOpen && <div className="nav__backdrop" onClick={closeNav} />}
+          <nav className={navOpen ? 'nav nav--open' : 'nav'}>
             <button
               type="button"
               className="nav__link"
-              onClick={() => onNavigateHomeSection('home')}
+              onClick={() => { onNavigateHomeSection('home'); closeNav() }}
             >
               Home
             </button>
-            <button type="button" className="nav__link" onClick={onNavigateServices}>
+            <button type="button" className="nav__link" onClick={() => { onNavigateServices(); closeNav() }}>
               Services
             </button>
-            <button type="button" className="nav__link" onClick={onNavigateAbout}>
+            <button type="button" className="nav__link" onClick={() => { onNavigateAbout(); closeNav() }}>
               About Us
             </button>
-            <button type="button" className="nav__link nav__link--active">
+            <button type="button" className="nav__link nav__link--active" onClick={closeNav}>
               Contact
             </button>
-            <button type="button" className="swap" onClick={onChangeExperience}>
+            <button type="button" className="swap" onClick={() => { onChangeExperience(); closeNav() }}>
               Change experience
             </button>
           </nav>

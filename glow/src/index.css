@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Spline+Sans:wght@400;500;600&display=swap');
 
 :root {
-  --accent-strong: #896ee1;
-  --accent-soft: #fb70b1;
-  --accent-dark: #b358e4;
-  --accent-sky: #9dd5f6;
+  --accent-strong: #876be3;
+  --accent-soft: #f974b3;
+  --accent-dark: #6d4fce;
+  --accent-sky: #47cbfb;
   --bg: #fefefe;
   --text: #3b3551;
   --text-soft: #60567e;
@@ -30,10 +30,18 @@
 
 html {
   scroll-padding-top: 90px;
+  /* Evita scroll/zoom horizontal en móvil. Solo en <html>: ponerlo también
+     en body/#root hace que su overflow-y compute a auto y rompe position: sticky. */
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
+}
+
+#root {
+  max-width: 100%;
 }
 
 body.selector-active {

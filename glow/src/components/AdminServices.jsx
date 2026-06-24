@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
+import { useConfirm } from './ConfirmDialog'
 
 const EMPTY_PACKAGE = {
   name: 'New Package',
@@ -22,6 +23,7 @@ function AdminServices({ data, onSave }) {
   })))
   const [activeIdx, setActiveIdx] = useState(0)
   const [status, setStatus] = useState(null)
+  const confirm = useConfirm()
 
   const updateService = (field, value) =>
     setServices(services.map((s, i) => i !== activeIdx ? s : { ...s, [field]: value }))
@@ -38,11 +40,13 @@ function AdminServices({ data, onSave }) {
       packages: [...s.packages, { ...EMPTY_PACKAGE }],
     }))
 
-  const removePackage = (pIdx) =>
+  const removePackage = async (pIdx) => {
+    if (!(await confirm('Remove this package? This action cannot be undone.'))) return
     setServices(services.map((s, i) => i !== activeIdx ? s : {
       ...s,
       packages: s.packages.filter((_, pi) => pi !== pIdx),
     }))
+  }
 
   const updateAddition = (aIdx, field, value) =>
     setServices(services.map((s, i) => i !== activeIdx ? s : {
@@ -56,11 +60,13 @@ function AdminServices({ data, onSave }) {
       additions: [...(s.additions || []), { ...EMPTY_ADDITION }],
     }))
 
-  const removeAddition = (aIdx) =>
+  const removeAddition = async (aIdx) => {
+    if (!(await confirm('Remove this add-on? This action cannot be undone.'))) return
     setServices(services.map((s, i) => i !== activeIdx ? s : {
       ...s,
       additions: s.additions.filter((_, ai) => ai !== aIdx),
     }))
+  }
 
   const movePackage = (pIdx, dir) => {
     const newIdx = pIdx + dir

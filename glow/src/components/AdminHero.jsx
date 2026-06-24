@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
+import { useConfirm } from './ConfirmDialog'
 
 const SERVICE_LABELS = {
   'premium-experience':   'Premium Experience',
@@ -16,12 +17,15 @@ function AdminHero({ data, onSave }) {
     return init
   })
   const [status, setStatus] = useState(null)
+  const confirm = useConfirm()
 
   const addImage = (serviceId, url = '') =>
     setForm({ ...form, [serviceId]: [...form[serviceId], url] })
 
-  const removeImage = (serviceId, idx) =>
+  const removeImage = async (serviceId, idx) => {
+    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
     setForm({ ...form, [serviceId]: form[serviceId].filter((_, i) => i !== idx) })
+  }
 
   const updateImage = (serviceId, idx, val) =>
     setForm({ ...form, [serviceId]: form[serviceId].map((src, i) => (i === idx ? val : src)) })
