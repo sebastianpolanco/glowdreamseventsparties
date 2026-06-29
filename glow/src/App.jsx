@@ -10,6 +10,7 @@ import ServicesPage from './components/ServicesPage'
 import FloatingContact from './components/FloatingContact'
 import Login from './components/login'
 import AdminDashboard from './components/AdminDashboard'
+import InstallPrompt from './components/InstallPrompt'
 import './App.css'
 
 const SERVICES_DEFAULT = [
@@ -358,30 +359,36 @@ function App() {
 
   if (page === 'admin-login') {
     return (
-      <Login
-        onLogin={handleAdminLogin}
-        onBack={() => setPage('home')}
-      />
+      <>
+        <Login
+          onLogin={handleAdminLogin}
+          onBack={() => setPage('home')}
+        />
+        <InstallPrompt />
+      </>
     )
   }
 
   if (page === 'admin' && isAdminLoggedIn) {
     return (
-      <AdminDashboard
-        heroBackgrounds={heroBackgrounds}
-        onSaveHero={persist('hero', setHeroBackgrounds)}
-        services={services}
-        onSaveServices={persist('services', setServices)}
-        galleryImages={galleryImages}
-        onSaveGallery={persist('gallery', setGalleryImages)}
-        aboutCards={aboutCards}
-        onSaveAbout={persist('about', setAboutCards)}
-        reviews={reviews}
-        onSaveReviews={persist('reviews', setReviews)}
-        contactInfo={contactInfo}
-        onSaveContact={persist('contact', setContactInfo)}
-        onLogout={handleAdminLogout}
-      />
+      <>
+        <AdminDashboard
+          heroBackgrounds={heroBackgrounds}
+          onSaveHero={persist('hero', setHeroBackgrounds)}
+          services={services}
+          onSaveServices={persist('services', setServices)}
+          galleryImages={galleryImages}
+          onSaveGallery={persist('gallery', setGalleryImages)}
+          aboutCards={aboutCards}
+          onSaveAbout={persist('about', setAboutCards)}
+          reviews={reviews}
+          onSaveReviews={persist('reviews', setReviews)}
+          contactInfo={contactInfo}
+          onSaveContact={persist('contact', setContactInfo)}
+          onLogout={handleAdminLogout}
+        />
+        <InstallPrompt />
+      </>
     )
   }
 
