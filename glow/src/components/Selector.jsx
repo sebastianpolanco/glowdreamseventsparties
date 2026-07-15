@@ -17,8 +17,9 @@ function Selector({ services, onSelect, loaded = true }) {
       <header className="selector__overlay">
         <img className="selector__logo" src="/logo.png" alt="Glow Dreams" />
         <p className="lead">
-          Select the atmosphere that matches your celebration. Each option is
-          curated to feel magical, elegant, and unforgettable.
+          Choose the perfect experience for your celebration. Every package is
+          thoughtfully designed to create magical moments and unforgettable
+          memories.
         </p>
       </header>
       <div
@@ -33,7 +34,6 @@ function Selector({ services, onSelect, loaded = true }) {
           >
             <div className="service-panel__content">
               <div className="service-card">
-                <div className="service-card__tag">Select</div>
                 <h2>{service.name}</h2>
                 <p>{service.subtitle}</p>
                 <button
@@ -41,7 +41,7 @@ function Selector({ services, onSelect, loaded = true }) {
                   className="service-panel__cta"
                   onClick={() => onSelect(service.id)}
                 >
-                  Select experience
+                  EXPLORE
                 </button>
               </div>
             </div>

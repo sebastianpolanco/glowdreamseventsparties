@@ -17,7 +17,7 @@ const SERVICES_DEFAULT = [
   {
     id: 'premium-experience',
     name: 'Premium Experience',
-    subtitle: 'A night of show and glow',
+    subtitle: 'Pampering, beauty and magical memories',
     summary:
       'Lighting, sound, welcome set, and interactive stations for an unforgettable party.',
     backgroundMedia: {
@@ -65,7 +65,7 @@ const SERVICES_DEFAULT = [
   {
     id: 'spa-premium',
     name: 'Spa Premium',
-    subtitle: 'Glow rituals for queens',
+    subtitle: 'Beautiful celebrations for every special occasion',
     summary:
       'An elegant spa with soft aromas, satin robes, and a glow oasis to celebrate in style.',
     backgroundMedia: {
@@ -113,7 +113,7 @@ const SERVICES_DEFAULT = [
   {
     id: 'kids-wedding-lounger',
     name: 'The Kids Wedding Lounger',
-    subtitle: 'Mini weddings, maximum magic',
+    subtitle: 'A magical space for little wedding guests',
     summary:
       'A kids lounge with a playful ceremony, dresses, mini banquet, and lots of glamour.',
     backgroundMedia: {
@@ -293,6 +293,10 @@ function App() {
     () => services.find((s) => s.id === activeServiceId),
     [activeServiceId, services]
   )
+
+  // The home no longer uses a hero background photo — the whole page shows the
+  // fixed pink/lilac gradient defined on `.experience` in the CSS (same as the
+  // Services page).
 
   useEffect(() => {
     const onPopState = () => {

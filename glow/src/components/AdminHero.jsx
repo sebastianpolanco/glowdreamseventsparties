@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
 import { useConfirm } from './ConfirmDialog'
+import AdminToast from './AdminToast'
 
 const SERVICE_LABELS = {
   'premium-experience':   'Premium Experience',
@@ -8,32 +9,32 @@ const SERVICE_LABELS = {
   'kids-wedding-lounger': 'The Kids Wedding Lounger',
 }
 
-function AdminHero({ data, onSave }) {
-  const [form, setForm] = useState(() => {
-    const init = {}
-    Object.keys(SERVICE_LABELS).forEach((id) => {
-      init[id] = Array.isArray(data[id]) ? [...data[id]] : data[id] ? [data[id]] : []
-    })
-    return init
+function buildForm(data) {
+  const init = {}
+  Object.keys(SERVICE_LABELS).forEach((id) => {
+    init[id] = Array.isArray(data?.[id]) ? [...data[id]] : data?.[id] ? [data[id]] : []
   })
+  return init
+}
+
+function AdminHero({ data, onSave }) {
+  const [form, setForm] = useState(() => buildForm(data))
   const [status, setStatus] = useState(null)
   const confirm = useConfirm()
 
-  const addImage = (serviceId, url = '') =>
-    setForm({ ...form, [serviceId]: [...form[serviceId], url] })
-
-  const removeImage = async (serviceId, idx) => {
-    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
-    setForm({ ...form, [serviceId]: form[serviceId].filter((_, i) => i !== idx) })
+  // Firestore delivers the real hero images asynchronously, after this
+  // component has already mounted with the default (placeholder) data. Re-sync
+  // the form whenever the incoming data changes so saved images actually show.
+  const [prevData, setPrevData] = useState(data)
+  if (data !== prevData) {
+    setPrevData(data)
+    setForm(buildForm(data))
   }
 
-  const updateImage = (serviceId, idx, val) =>
-    setForm({ ...form, [serviceId]: form[serviceId].map((src, i) => (i === idx ? val : src)) })
-
-  const handleSave = async () => {
+  const save = async (next) => {
     setStatus('saving')
     try {
-      await onSave(form)
+      await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
@@ -41,6 +42,19 @@ function AdminHero({ data, onSave }) {
     }
     setTimeout(() => setStatus(null), 3000)
   }
+
+  const addImage = (serviceId, url = '') =>
+    setForm({ ...form, [serviceId]: [...form[serviceId], url] })
+
+  const removeImage = async (serviceId, idx) => {
+    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
+    const next = { ...form, [serviceId]: form[serviceId].filter((_, i) => i !== idx) }
+    setForm(next)
+    await save(next)
+  }
+
+  const updateImage = (serviceId, idx, val) =>
+    setForm({ ...form, [serviceId]: form[serviceId].map((src, i) => (i === idx ? val : src)) })
 
   return (
     <section className="admin-section">
@@ -61,13 +75,16 @@ function AdminHero({ data, onSave }) {
               <div key={idx} className="admin-card admin-card--gallery">
                 <div className="admin-card__pkg-header">
                   <span className="admin-card__pkg-num">Slide {idx + 1}</span>
-                  <button type="button" className="admin-remove-btn" onClick={() => removeImage(serviceId, idx)}>✕ Remove</button>
                 </div>
                 <ImageUploader
                   value={src}
                   onChange={(url) => updateImage(serviceId, idx, url)}
                   folder={`hero/${serviceId}`}
                 />
+                <div className="admin-card__actions">
+                  <button type="button" className="admin-update-btn" onClick={() => save(form)} disabled={status === 'saving'}>↻ Update</button>
+                  <button type="button" className="admin-remove-btn" onClick={() => removeImage(serviceId, idx)}>🗑 Delete</button>
+                </div>
               </div>
             ))}
           </div>
@@ -78,11 +95,7 @@ function AdminHero({ data, onSave }) {
         </div>
       ))}
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

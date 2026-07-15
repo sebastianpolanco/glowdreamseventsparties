@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
+import AdminToast from './AdminToast'
 
 function AdminAbout({ data, onSave }) {
   const [cards, setCards] = useState(data.map((c) => ({ ...c })))
@@ -8,10 +9,10 @@ function AdminAbout({ data, onSave }) {
   const update = (idx, field, value) =>
     setCards(cards.map((c, i) => (i !== idx ? c : { ...c, [field]: value })))
 
-  const handleSave = async () => {
+  const save = async (next) => {
     setStatus('saving')
     try {
-      await onSave(cards)
+      await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
@@ -45,15 +46,14 @@ function AdminAbout({ data, onSave }) {
               onChange={(url) => update(idx, 'image', url)}
               folder="about"
             />
+            <div className="admin-card__actions">
+              <button type="button" className="admin-update-btn" onClick={() => save(cards)} disabled={status === 'saving'}>↻ Update</button>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

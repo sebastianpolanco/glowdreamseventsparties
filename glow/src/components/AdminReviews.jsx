@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import ImageUploader from './ImageUploader'
 import { useConfirm } from './ConfirmDialog'
+import AdminToast from './AdminToast'
 
-const emptyReview = () => ({ name: '', role: '', rating: 5, text: '', image: '' })
+const emptyReview = () => ({ name: '', role: '', rating: 5, text: '' })
 
 function StarPicker({ value, onChange }) {
   return (
@@ -31,19 +31,13 @@ function AdminReviews({ data, onSave }) {
   const [status, setStatus] = useState(null)
   const confirm = useConfirm()
 
-  const add = () => setReviews([emptyReview(), ...reviews])
-  const remove = async (idx) => {
-    if (!(await confirm('Remove this review? This action cannot be undone.'))) return
-    setReviews(reviews.filter((_, i) => i !== idx))
-  }
-  const update = (idx, field, value) =>
-    setReviews(reviews.map((r, i) => (i !== idx ? r : { ...r, [field]: value })))
-
-  const handleSave = async () => {
+  // Build the full section payload from the given reviews list (defaults to
+  // current state) plus the shared Google links.
+  const save = async (nextReviews = reviews) => {
     setStatus('saving')
     try {
       await onSave({
-        items: reviews.filter((r) => r.name.trim() || r.text.trim()),
+        items: nextReviews.filter((r) => r.name.trim() || r.text.trim()),
         googleUrl: googleUrl.trim(),
         writeUrl: writeUrl.trim(),
       })
@@ -54,6 +48,16 @@ function AdminReviews({ data, onSave }) {
     }
     setTimeout(() => setStatus(null), 3000)
   }
+
+  const add = () => setReviews([emptyReview(), ...reviews])
+  const remove = async (idx) => {
+    if (!(await confirm('Remove this review? This action cannot be undone.'))) return
+    const next = reviews.filter((_, i) => i !== idx)
+    setReviews(next)
+    await save(next)
+  }
+  const update = (idx, field, value) =>
+    setReviews(reviews.map((r, i) => (i !== idx ? r : { ...r, [field]: value })))
 
   return (
     <section className="admin-section">
@@ -73,6 +77,9 @@ function AdminReviews({ data, onSave }) {
           <input type="url" value={writeUrl} onChange={(e) => setWriteUrl(e.target.value)} className="admin-input" placeholder="https://search.google.com/local/writereview?placeid=…" />
         </label>
         <p className="admin-section__sub">Leave the write-a-review link empty to reuse the reviews link for both buttons.</p>
+        <div className="admin-card__actions">
+          <button type="button" className="admin-update-btn" onClick={() => save()} disabled={status === 'saving'}>↻ Update</button>
+        </div>
       </div>
 
       <div className="admin-packages-header">
@@ -85,7 +92,6 @@ function AdminReviews({ data, onSave }) {
           <div key={idx} className="admin-card">
             <div className="admin-card__pkg-header">
               <span className="admin-card__pkg-num">#{idx + 1}</span>
-              <button type="button" className="admin-remove-btn" onClick={() => remove(idx)}>✕ Remove</button>
             </div>
             <label className="admin-label">
               Name
@@ -101,12 +107,10 @@ function AdminReviews({ data, onSave }) {
               Review
               <textarea rows="4" value={review.text} onChange={(e) => update(idx, 'text', e.target.value)} className="admin-input" placeholder="What did they say?" />
             </label>
-            <label className="admin-label">Photo (optional)</label>
-            <ImageUploader
-              value={review.image}
-              onChange={(url) => update(idx, 'image', url)}
-              folder="reviews"
-            />
+            <div className="admin-card__actions">
+              <button type="button" className="admin-update-btn" onClick={() => save()} disabled={status === 'saving'}>↻ Update</button>
+              <button type="button" className="admin-remove-btn" onClick={() => remove(idx)}>🗑 Delete</button>
+            </div>
           </div>
         ))}
       </div>
@@ -115,11 +119,7 @@ function AdminReviews({ data, onSave }) {
         <p className="admin-empty-msg">No reviews yet. Click "+ Add Review" to add one.</p>
       )}
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

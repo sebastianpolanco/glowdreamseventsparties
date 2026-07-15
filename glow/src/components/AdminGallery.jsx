@@ -1,29 +1,32 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
 import { useConfirm } from './ConfirmDialog'
+import AdminToast from './AdminToast'
 
 function AdminGallery({ data, onSave }) {
   const [images, setImages] = useState([...data])
   const [status, setStatus] = useState(null)
   const confirm = useConfirm()
 
-  const add = () => setImages([...images, ''])
-  const remove = async (idx) => {
-    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
-    setImages(images.filter((_, i) => i !== idx))
-  }
-  const update = (idx, val) => setImages(images.map((img, i) => (i === idx ? val : img)))
-
-  const handleSave = async () => {
+  const save = async (next) => {
     setStatus('saving')
     try {
-      await onSave(images.filter(Boolean))
+      await onSave(next.filter(Boolean))
       setStatus('saved')
     } catch (err) {
       console.error(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
+  }
+
+  const add = () => setImages([...images, ''])
+  const update = (idx, val) => setImages(images.map((img, i) => (i === idx ? val : img)))
+  const remove = async (idx) => {
+    if (!(await confirm('Remove this image? This action cannot be undone.'))) return
+    const next = images.filter((_, i) => i !== idx)
+    setImages(next)
+    await save(next)
   }
 
   return (
@@ -43,13 +46,16 @@ function AdminGallery({ data, onSave }) {
           <div key={idx} className="admin-card admin-card--gallery">
             <div className="admin-card__pkg-header">
               <span className="admin-card__pkg-num">#{idx + 1}</span>
-              <button type="button" className="admin-remove-btn" onClick={() => remove(idx)}>✕ Remove</button>
             </div>
             <ImageUploader
               value={src}
               onChange={(url) => update(idx, url)}
               folder="gallery"
             />
+            <div className="admin-card__actions">
+              <button type="button" className="admin-update-btn" onClick={() => save(images)} disabled={status === 'saving'}>↻ Update</button>
+              <button type="button" className="admin-remove-btn" onClick={() => remove(idx)}>🗑 Delete</button>
+            </div>
           </div>
         ))}
       </div>
@@ -58,11 +64,7 @@ function AdminGallery({ data, onSave }) {
         <p className="admin-empty-msg">No images yet. Click "+ Add Image" to add one.</p>
       )}
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

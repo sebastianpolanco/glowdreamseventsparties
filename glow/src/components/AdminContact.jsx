@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AdminToast from './AdminToast'
 
 function AdminContact({ data, onSave }) {
   const [form, setForm] = useState({ ...data })
@@ -6,7 +7,7 @@ function AdminContact({ data, onSave }) {
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 
-  const handleSave = async () => {
+  const save = async () => {
     setStatus('saving')
     try {
       await onSave(form)
@@ -62,13 +63,12 @@ function AdminContact({ data, onSave }) {
           Location Map URL (optional)
           <input type="text" value={form.locationUrl || ''} onChange={set('locationUrl')} className="admin-input" placeholder="https://maps.google.com/…" />
         </label>
+        <div className="admin-card__actions">
+          <button type="button" className="admin-update-btn" onClick={save} disabled={status === 'saving'}>↻ Update</button>
+        </div>
       </div>
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

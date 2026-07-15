@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Spline+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spline+Sans:wght@400;500;600&display=swap');
 
 :root {
   --accent-strong: #876be3;
@@ -13,7 +13,7 @@
   --shadow-strong: 0 22px 40px -18px rgba(75, 58, 129, 0.5);
 
   --sans: 'Spline Sans', sans-serif;
-  --heading: 'Cinzel', serif;
+  --heading: 'Fraunces', serif;
 
   font: 17px/160% var(--sans);
   color: var(--text);

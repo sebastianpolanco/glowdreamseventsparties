@@ -33,9 +33,10 @@ function compressToBase64(file) {
   })
 }
 
-function ImageUploader({ value, onChange, placeholder = 'Paste URL or upload a file…' }) {
+function ImageUploader({ value, onChange }) {
   const [compressing, setCompressing] = useState(false)
   const [error, setError] = useState(null)
+  const [imgError, setImgError] = useState(false)
   const inputRef = useRef(null)
 
   const handleFile = async (file) => {
@@ -58,7 +59,12 @@ function ImageUploader({ value, onChange, placeholder = 'Paste URL or upload a f
     if (file) handleFile(file)
   }
 
-  const isBase64 = value?.startsWith('data:')
+  // Reset the broken-image flag whenever the source changes.
+  const [prevValue, setPrevValue] = useState(value)
+  if (value !== prevValue) {
+    setPrevValue(value)
+    setImgError(false)
+  }
 
   return (
     <div
@@ -68,7 +74,14 @@ function ImageUploader({ value, onChange, placeholder = 'Paste URL or upload a f
     >
       {value && (
         <div className="img-uploader__preview">
-          <img src={value} alt="" />
+          {imgError ? (
+            <div className="img-uploader__missing">
+              <span>Image not found</span>
+              <small>Upload a file from your device</small>
+            </div>
+          ) : (
+            <img src={value} alt="" onError={() => setImgError(true)} />
+          )}
           <button
             type="button"
             className="img-uploader__clear"
@@ -79,21 +92,13 @@ function ImageUploader({ value, onChange, placeholder = 'Paste URL or upload a f
       )}
 
       <div className="img-uploader__row">
-        <input
-          type="text"
-          value={isBase64 ? '(uploaded image)' : (value || '')}
-          onChange={(e) => !isBase64 && onChange(e.target.value)}
-          readOnly={isBase64}
-          className="admin-input"
-          placeholder={placeholder}
-        />
         <button
           type="button"
-          className="img-uploader__btn"
+          className="img-uploader__btn img-uploader__btn--block"
           onClick={() => inputRef.current?.click()}
           disabled={compressing}
         >
-          {compressing ? 'Compressing…' : '↑ Upload'}
+          {compressing ? 'Compressing…' : value ? '↑ Change image' : '↑ Upload image'}
         </button>
         <input
           ref={inputRef}

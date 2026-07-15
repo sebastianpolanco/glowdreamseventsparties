@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ImageUploader from './ImageUploader'
 import { useConfirm } from './ConfirmDialog'
+import AdminToast from './AdminToast'
 
 const EMPTY_PACKAGE = {
   name: 'New Package',
@@ -25,6 +26,18 @@ function AdminServices({ data, onSave }) {
   const [status, setStatus] = useState(null)
   const confirm = useConfirm()
 
+  const save = async (next) => {
+    setStatus('saving')
+    try {
+      await onSave(next)
+      setStatus('saved')
+    } catch (err) {
+      console.error(err)
+      setStatus('error')
+    }
+    setTimeout(() => setStatus(null), 3000)
+  }
+
   const updateService = (field, value) =>
     setServices(services.map((s, i) => i !== activeIdx ? s : { ...s, [field]: value }))
 
@@ -42,10 +55,12 @@ function AdminServices({ data, onSave }) {
 
   const removePackage = async (pIdx) => {
     if (!(await confirm('Remove this package? This action cannot be undone.'))) return
-    setServices(services.map((s, i) => i !== activeIdx ? s : {
+    const next = services.map((s, i) => i !== activeIdx ? s : {
       ...s,
       packages: s.packages.filter((_, pi) => pi !== pIdx),
-    }))
+    })
+    setServices(next)
+    await save(next)
   }
 
   const updateAddition = (aIdx, field, value) =>
@@ -62,10 +77,12 @@ function AdminServices({ data, onSave }) {
 
   const removeAddition = async (aIdx) => {
     if (!(await confirm('Remove this add-on? This action cannot be undone.'))) return
-    setServices(services.map((s, i) => i !== activeIdx ? s : {
+    const next = services.map((s, i) => i !== activeIdx ? s : {
       ...s,
       additions: s.additions.filter((_, ai) => ai !== aIdx),
-    }))
+    })
+    setServices(next)
+    await save(next)
   }
 
   const movePackage = (pIdx, dir) => {
@@ -78,18 +95,6 @@ function AdminServices({ data, onSave }) {
       pkgs[newIdx] = tmp
       return { ...s, packages: pkgs }
     }))
-  }
-
-  const handleSave = async () => {
-    setStatus('saving')
-    try {
-      await onSave(services)
-      setStatus('saved')
-    } catch (err) {
-      console.error(err)
-      setStatus('error')
-    }
-    setTimeout(() => setStatus(null), 3000)
   }
 
   const service = services[activeIdx]
@@ -121,9 +126,16 @@ function AdminServices({ data, onSave }) {
           <input type="text" value={service.name} onChange={(e) => updateService('name', e.target.value)} className="admin-input" />
         </label>
         <label className="admin-label">
+          Subtitle (selector card)
+          <input type="text" value={service.subtitle || ''} onChange={(e) => updateService('subtitle', e.target.value)} className="admin-input" />
+        </label>
+        <label className="admin-label">
           Summary
           <textarea rows="3" value={service.summary} onChange={(e) => updateService('summary', e.target.value)} className="admin-input" />
         </label>
+        <div className="admin-card__actions">
+          <button type="button" className="admin-update-btn" onClick={() => save(services)} disabled={status === 'saving'}>↻ Update</button>
+        </div>
       </div>
 
       <div className="admin-packages-header">
@@ -151,12 +163,6 @@ function AdminServices({ data, onSave }) {
                   disabled={pIdx === service.packages.length - 1}
                   title="Move right"
                 >→</button>
-                <button
-                  type="button"
-                  className="admin-remove-btn"
-                  onClick={() => removePackage(pIdx)}
-                  title="Delete package"
-                >✕ Remove</button>
               </div>
             </div>
 
@@ -190,6 +196,10 @@ function AdminServices({ data, onSave }) {
               onChange={(url) => updatePackage(pIdx, 'image', url)}
               folder="services"
             />
+            <div className="admin-card__actions">
+              <button type="button" className="admin-update-btn" onClick={() => save(services)} disabled={status === 'saving'}>↻ Update</button>
+              <button type="button" className="admin-remove-btn" onClick={() => removePackage(pIdx)} title="Delete package">🗑 Delete</button>
+            </div>
           </div>
         ))}
       </div>
@@ -208,12 +218,6 @@ function AdminServices({ data, onSave }) {
           <div key={aIdx} className="admin-card admin-card--package">
             <div className="admin-card__pkg-header">
               <span className="admin-card__pkg-num">#{aIdx + 1}</span>
-              <button
-                type="button"
-                className="admin-remove-btn"
-                onClick={() => removeAddition(aIdx)}
-                title="Delete add-on"
-              >✕ Remove</button>
             </div>
 
             <label className="admin-label">
@@ -234,6 +238,10 @@ function AdminServices({ data, onSave }) {
               onChange={(url) => updateAddition(aIdx, 'image', url)}
               folder="services"
             />
+            <div className="admin-card__actions">
+              <button type="button" className="admin-update-btn" onClick={() => save(services)} disabled={status === 'saving'}>↻ Update</button>
+              <button type="button" className="admin-remove-btn" onClick={() => removeAddition(aIdx)} title="Delete add-on">🗑 Delete</button>
+            </div>
           </div>
         ))}
       </div>
@@ -242,11 +250,7 @@ function AdminServices({ data, onSave }) {
         <p className="admin-empty-msg">No add-ons yet. Click "+ Add Add-on" to create one.</p>
       )}
 
-      <div className="admin-actions">
-        <button type="button" className={`admin-save-btn${status === 'error' ? ' admin-save-btn--error' : ''}`} onClick={handleSave} disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓ Saved!' : status === 'error' ? '✗ Error — check Firestore rules' : 'Save Changes'}
-        </button>
-      </div>
+      <AdminToast status={status} />
     </section>
   )
 }

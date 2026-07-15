@@ -77,8 +77,8 @@ function AboutPage({ cards = [], gallery = [], onNavigateHomeSection, onNavigate
 
       <footer className="home-footer">
         <img className="home-footer__logo" src="/logo.png" alt="Glow Dreams" />
-        <p className="home-footer__phrase">Every celebration deserves a glow.</p>
-        <span className="home-footer__copy">Copyright {year} Glow Dreams</span>
+        <p className="home-footer__phrase">Where every celebration becomes a beautiful memory.</p>
+        <span className="home-footer__copy">{year} Glow Dreams Parties and Events</span>
       </footer>
     </main>
   )
