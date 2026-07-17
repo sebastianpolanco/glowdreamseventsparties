@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AdminSelector from './AdminSelector'
 import AdminHero from './AdminHero'
 import AdminServices from './AdminServices'
 import AdminGallery from './AdminGallery'
@@ -8,6 +9,7 @@ import AdminReviews from './AdminReviews'
 import { ConfirmProvider } from './ConfirmDialog'
 
 const SECTIONS = [
+  { id: 'selector', label: 'Selector' },
   { id: 'hero',     label: 'Hero Images' },
   { id: 'services', label: 'Services' },
   { id: 'gallery',  label: 'Gallery' },
@@ -17,6 +19,7 @@ const SECTIONS = [
 ]
 
 function AdminDashboard({
+  selectorBackground, onSaveSelector,
   heroBackgrounds, onSaveHero,
   services, onSaveServices,
   galleryImages, onSaveGallery,
@@ -25,7 +28,7 @@ function AdminDashboard({
   contactInfo, onSaveContact,
   onLogout,
 }) {
-  const [active, setActive] = useState('hero')
+  const [active, setActive] = useState('selector')
   const [navOpen, setNavOpen] = useState(false)
   const closeNav = () => setNavOpen(false)
 
@@ -78,6 +81,7 @@ function AdminDashboard({
       </aside>
 
       <main className="admin-main">
+        {active === 'selector' && <AdminSelector data={selectorBackground} onSave={onSaveSelector} />}
         {active === 'hero'     && <AdminHero     data={heroBackgrounds} onSave={onSaveHero} />}
         {active === 'services' && <AdminServices data={services}        onSave={onSaveServices} />}
         {active === 'gallery'  && <AdminGallery  data={galleryImages}   onSave={onSaveGallery} />}

@@ -1,18 +1,14 @@
-const SELECTOR_BACKGROUND_VIDEO = '/Spapremium.MOV'
-
-function Selector({ services, onSelect, loaded = true }) {
+function Selector({ services, onSelect, loaded = true, background = '' }) {
   return (
     <main className="selector selector--split">
-      <video
-        className="selector__background"
-        src={SELECTOR_BACKGROUND_VIDEO}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      />
+      {background && (
+        <img
+          className="selector__background"
+          src={background}
+          alt=""
+          aria-hidden="true"
+        />
+      )}
       <div className="selector__backdrop" aria-hidden="true" />
       <header className="selector__overlay">
         <img className="selector__logo" src="/logo.png" alt="Glow Dreams" />

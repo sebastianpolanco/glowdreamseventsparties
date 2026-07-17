@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from './firebase'
@@ -11,6 +12,7 @@ import FloatingContact from './components/FloatingContact'
 import Login from './components/login'
 import AdminDashboard from './components/AdminDashboard'
 import InstallPrompt from './components/InstallPrompt'
+import useSeo from './useSeo'
 import './App.css'
 
 const SERVICES_DEFAULT = [
@@ -20,10 +22,6 @@ const SERVICES_DEFAULT = [
     subtitle: 'Pampering, beauty and magical memories',
     summary:
       'Lighting, sound, welcome set, and interactive stations for an unforgettable party.',
-    backgroundMedia: {
-      type: 'video',
-      src: '/Spapremium.MOV',
-    },
     packages: [
       {
         name: 'Dream Starter',
@@ -68,10 +66,6 @@ const SERVICES_DEFAULT = [
     subtitle: 'Beautiful celebrations for every special occasion',
     summary:
       'An elegant spa with soft aromas, satin robes, and a glow oasis to celebrate in style.',
-    backgroundMedia: {
-      type: 'video',
-      src: '/Spapremium.MOV',
-    },
     packages: [
       {
         name: 'Luna Glow',
@@ -116,10 +110,6 @@ const SERVICES_DEFAULT = [
     subtitle: 'A magical space for little wedding guests',
     summary:
       'A kids lounge with a playful ceremony, dresses, mini banquet, and lots of glamour.',
-    backgroundMedia: {
-      type: 'video',
-      src: '/Spapremium.MOV',
-    },
     packages: [
       {
         name: 'Mini Vows',
@@ -159,6 +149,10 @@ const SERVICES_DEFAULT = [
     ],
   },
 ]
+
+// Full-screen image behind the experience selector. Owner replaces it from the
+// admin panel; the saved value is a compressed Base64 string stored in Firestore.
+const SELECTOR_BACKGROUND_DEFAULT = ''
 
 const HERO_BACKGROUNDS_DEFAULT = {
   'premium-experience':   ['/heroexpe.png'],
@@ -228,28 +222,225 @@ const DEFAULT_CONTACT_INFO = {
 
 const siteDoc = (field) => doc(db, 'site', field)
 
-const isAdminPath = () => window.location.pathname.startsWith('/admin')
+// SEO-friendly URL slug for each experience id. New/renamed experiences fall
+// back to their raw id as the slug, so links keep working even if the owner
+// edits the services in the admin panel.
+const SERVICE_SLUGS = {
+  'premium-experience': 'signature-celebrations',
+  'spa-premium': 'premium-spa-parties',
+  'kids-wedding-lounger': 'wedding-kids-corner',
+}
+
+// Per-experience title + description, tuned around the target keywords and the
+// Virginia / DMV location.
+const SERVICE_SEO = {
+  'spa-premium': {
+    title: 'Premium Spa Parties in Virginia & DMV | Glow Dreams',
+    description:
+      'Premium Spa Parties for kids and teens in Virginia and the DMV Area — spa setup, robes, facials, karaoke and gift bags. Book your glow spa celebration.',
+  },
+  'premium-experience': {
+    title: 'Signature Celebrations in Virginia & DMV | Glow Dreams',
+    description:
+      'Signature Celebrations with lighting, DJ, glow bar and full production in Virginia and the DMV Area. Unforgettable premium party experiences.',
+  },
+  'kids-wedding-lounger': {
+    title: 'Wedding Kids Corner in Virginia & DMV | Glow Dreams',
+    description:
+      'Wedding Kids Corner — a magical lounge for little wedding guests in Virginia and the DMV Area. Mini ceremony, dress-up, treats and glamour.',
+  },
+}
+
+const slugForId = (id) => SERVICE_SLUGS[id] || id
+const idForSlug = (slug) =>
+  Object.keys(SERVICE_SLUGS).find((id) => SERVICE_SLUGS[id] === slug) || slug
+
+const seoForService = (service) =>
+  SERVICE_SEO[service.id] || {
+    title: `${service.name} | Glow Dreams Parties & Events`,
+    description: service.summary,
+  }
+
+// Resolve the :serviceSlug URL param to a service object. The defaults already
+// contain the three experiences, so deep links resolve before Firestore answers.
+function useActiveService(services) {
+  const { serviceSlug } = useParams()
+  const id = idForSlug(serviceSlug)
+  return services.find((s) => s.id === id) || null
+}
+
+// ─── Route wrappers ────────────────────────────────────────────────────────
+// The page components already take navigation callbacks; each wrapper just
+// supplies router-powered versions and sets the page's SEO metadata.
+
+function SelectorRoute({ services, selectorBackground, dataLoaded }) {
+  const navigate = useNavigate()
+  useSeo({
+    title: 'Glow Dreams Parties & Events | Premium Spa Parties · Virginia & DMV',
+    description:
+      'Premium Spa Parties, Signature Celebrations and Wedding Kids Corner. Themed glow parties and events in Virginia and the DMV Area — Washington DC, Maryland & Virginia.',
+    path: '/',
+  })
+  return (
+    <Selector
+      services={services}
+      onSelect={(id) => navigate(`/${slugForId(id)}`)}
+      loaded={dataLoaded}
+      background={selectorBackground}
+    />
+  )
+}
+
+function HomeRoute({ services, heroBackgrounds, reviews, contactInfo }) {
+  const navigate = useNavigate()
+  const service = useActiveService(services)
+  const seo = service ? seoForService(service) : {}
+  useSeo({
+    title: seo.title,
+    description: seo.description,
+    path: service ? `/${slugForId(service.id)}` : undefined,
+  })
+  if (!service) return <Navigate to="/" replace />
+  const slug = slugForId(service.id)
+  return (
+    <>
+      <main className="experience">
+        <Home
+          title={service.name}
+          summary={service.summary}
+          packages={service.packages}
+          heroBackground={heroBackgrounds[service.id]}
+          reviews={reviews}
+          contactInfo={contactInfo}
+          onNavigateServices={() => navigate(`/${slug}/services`)}
+          onNavigateAbout={() => navigate(`/${slug}/about`)}
+          onNavigateContact={() => navigate(`/${slug}/contact`)}
+          onChangeExperience={() => navigate('/')}
+        />
+      </main>
+      <FloatingContact contactInfo={contactInfo} />
+    </>
+  )
+}
+
+function ServicesRoute({ services, contactInfo }) {
+  const navigate = useNavigate()
+  const service = useActiveService(services)
+  useSeo({
+    title: service ? `${service.name} Packages | Glow Dreams Parties & Events` : undefined,
+    description: service ? service.summary : undefined,
+    path: service ? `/${slugForId(service.id)}/services` : undefined,
+  })
+  if (!service) return <Navigate to="/" replace />
+  const slug = slugForId(service.id)
+  return (
+    <>
+      <ServicesPage
+        service={service}
+        onNavigateHomeSection={() => navigate(`/${slug}`)}
+        onNavigateServices={() => navigate(`/${slug}/services`)}
+        onNavigateAbout={() => navigate(`/${slug}/about`)}
+        onNavigateContact={() => navigate(`/${slug}/contact`)}
+        onSelectPackage={(pkg) => navigate(`/${slug}/contact`, { state: { pkg } })}
+        onChangeExperience={() => navigate('/')}
+      />
+      <FloatingContact contactInfo={contactInfo} />
+    </>
+  )
+}
+
+function AboutRoute({ services, aboutCards, galleryImages, contactInfo }) {
+  const navigate = useNavigate()
+  const service = useActiveService(services)
+  useSeo({
+    title: 'About Us | Glow Dreams Parties & Events',
+    description:
+      'Meet the team behind Glow Dreams Parties and Events — creating themed glow celebrations in Virginia and the DMV Area.',
+    path: service ? `/${slugForId(service.id)}/about` : undefined,
+  })
+  if (!service) return <Navigate to="/" replace />
+  const slug = slugForId(service.id)
+  return (
+    <>
+      <AboutPage
+        cards={aboutCards}
+        gallery={galleryImages}
+        onNavigateHomeSection={() => navigate(`/${slug}`)}
+        onNavigateServices={() => navigate(`/${slug}/services`)}
+        onNavigateContact={() => navigate(`/${slug}/contact`)}
+        onChangeExperience={() => navigate('/')}
+      />
+      <FloatingContact contactInfo={contactInfo} />
+    </>
+  )
+}
+
+function ContactRoute({ services, contactInfo }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const service = useActiveService(services)
+  useSeo({
+    title: 'Contact | Glow Dreams Parties & Events',
+    description:
+      'Contact Glow Dreams Parties and Events to book your celebration in Virginia and the DMV Area — Washington DC, Maryland & Virginia.',
+    path: service ? `/${slugForId(service.id)}/contact` : undefined,
+  })
+  if (!service) return <Navigate to="/" replace />
+  const slug = slugForId(service.id)
+  return (
+    <>
+      <ContactPage
+        service={service}
+        contactInfo={contactInfo}
+        selectedPackage={location.state?.pkg || ''}
+        onNavigateHomeSection={() => navigate(`/${slug}`)}
+        onNavigateServices={() => navigate(`/${slug}/services`)}
+        onNavigateAbout={() => navigate(`/${slug}/about`)}
+        onChangeExperience={() => navigate('/')}
+      />
+      <FloatingContact contactInfo={contactInfo} />
+    </>
+  )
+}
+
+function AdminRoute({ isAdminLoggedIn, dashboardProps }) {
+  const navigate = useNavigate()
+  useSeo({ title: 'Admin | Glow Dreams', description: 'Glow Dreams admin panel.', path: '/admin' })
+  if (!isAdminLoggedIn) {
+    return (
+      <>
+        <Login onLogin={() => navigate('/admin')} onBack={() => navigate('/')} />
+        <InstallPrompt />
+      </>
+    )
+  }
+  return (
+    <>
+      <AdminDashboard
+        {...dashboardProps}
+        onLogout={async () => {
+          await signOut(auth)
+          navigate('/')
+        }}
+      />
+      <InstallPrompt />
+    </>
+  )
+}
+
+// Scroll to the top of the page on every route change.
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
 
 function App() {
-  const [activeServiceId, setActiveServiceId] = useState(null)
-  const [selectedPackage, setSelectedPackage] = useState('')
-
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false)
 
-  const [page, setPage] = useState(() => (isAdminPath() ? 'admin-login' : 'home'))
-
-  // Firebase persists the session (localStorage), so on reload onAuthStateChanged
-  // restores the logged-in user and we land on the dashboard for /admin paths.
-  useEffect(() => {
-    return onAuthStateChanged(auth, (user) => {
-      const loggedIn = !!user
-      setIsAdminLoggedIn(loggedIn)
-      if (isAdminPath()) {
-        setPage(loggedIn ? 'admin' : 'admin-login')
-      }
-    })
-  }, [])
-
+  const [selectorBackground, setSelectorBackground] = useState(SELECTOR_BACKGROUND_DEFAULT)
   const [heroBackgrounds, setHeroBackgrounds] = useState(HERO_BACKGROUNDS_DEFAULT)
   const [services, setServices] = useState(SERVICES_DEFAULT)
   const [galleryImages, setGalleryImages] = useState(DEFAULT_GALLERY)
@@ -258,8 +449,16 @@ function App() {
   const [contactInfo, setContactInfo] = useState(DEFAULT_CONTACT_INFO)
 
   // False until Firestore answers for the first time, so we don't flash the
-  // default (placeholder) text before the real content arrives.
+  // default (placeholder) content before the real data arrives.
   const [dataLoaded, setDataLoaded] = useState(false)
+
+  const location = useLocation()
+
+  // Firebase persists the session (localStorage), so on reload onAuthStateChanged
+  // restores the logged-in user and /admin lands on the dashboard.
+  useEffect(() => {
+    return onAuthStateChanged(auth, (user) => setIsAdminLoggedIn(!!user))
+  }, [])
 
   // Real-time listener — each section lives in its own doc to stay under Firestore's 1 MB limit
   useEffect(() => {
@@ -270,6 +469,7 @@ function App() {
           const d = snap.data()?.data
           if (!d) return
           switch (snap.id) {
+            case 'selector': setSelectorBackground(d); break
             case 'hero':     setHeroBackgrounds(d); break
             case 'services': setServices(d);        break
             case 'gallery':  setGalleryImages(d);   break
@@ -289,40 +489,13 @@ function App() {
     return () => unsubscribe()
   }, [])
 
-  const activeService = useMemo(
-    () => services.find((s) => s.id === activeServiceId),
-    [activeServiceId, services]
-  )
-
-  // The home no longer uses a hero background photo — the whole page shows the
-  // fixed pink/lilac gradient defined on `.experience` in the CSS (same as the
-  // Services page).
-
+  // The full-screen selector background locks scrolling; keep that on the
+  // landing and admin routes (matches the previous behaviour), release it on
+  // the scrollable experience pages.
   useEffect(() => {
-    const onPopState = () => {
-      if (isAdminPath()) {
-        setPage(isAdminLoggedIn ? 'admin' : 'admin-login')
-      } else {
-        setPage('home')
-      }
-    }
-    window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
-  }, [isAdminLoggedIn])
-
-  useEffect(() => {
-    if (activeServiceId) {
-      document.body.classList.remove('selector-active')
-      return
-    }
-    document.body.classList.add('selector-active')
-    return () => document.body.classList.remove('selector-active')
-  }, [activeServiceId])
-
-  // When switching between pages, start the new page from the top.
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [page])
+    const lockScroll = location.pathname === '/' || location.pathname === '/admin'
+    document.body.classList.toggle('selector-active', lockScroll)
+  }, [location.pathname])
 
   // Each section is saved to its own Firestore document: site/hero, site/services, etc.
   // This keeps each doc well under the 1 MB limit even with Base64 images.
@@ -331,130 +504,75 @@ function App() {
     await setDoc(siteDoc(field), { data })
   }
 
-  const handleAdminLogin = () => {
-    // Auth already succeeded inside Login; onAuthStateChanged updates isAdminLoggedIn.
-    window.history.pushState(null, '', '/admin')
-    setPage('admin')
+  const dashboardProps = {
+    selectorBackground,
+    onSaveSelector: persist('selector', setSelectorBackground),
+    heroBackgrounds,
+    onSaveHero: persist('hero', setHeroBackgrounds),
+    services,
+    onSaveServices: persist('services', setServices),
+    galleryImages,
+    onSaveGallery: persist('gallery', setGalleryImages),
+    aboutCards,
+    onSaveAbout: persist('about', setAboutCards),
+    reviews,
+    onSaveReviews: persist('reviews', setReviews),
+    contactInfo,
+    onSaveContact: persist('contact', setContactInfo),
   }
 
-  const handleAdminLogout = async () => {
-    await signOut(auth)
-    window.history.pushState(null, '', '/')
-    setPage('home')
-  }
-
-  const navigateToHomeSection = (sectionId) => {
-    setPage('home')
-    window.setTimeout(() => { window.location.hash = sectionId ? `#${sectionId}` : '#home' }, 0)
-  }
-  const navigateToServices = () => { setPage('services'); window.history.pushState(null, '', '#services') }
-  const navigateToAbout    = () => { setPage('about');    window.history.pushState(null, '', '#about') }
-  const navigateToContact  = () => { setPage('contact');  window.history.pushState(null, '', '#contact') }
-  const handleSelectPackage = (packageName) => {
-    setSelectedPackage(packageName)
-    setPage('contact')
-    window.history.pushState(null, '', '#contact')
-  }
-  const handleChangeExperience = () => {
-    setPage('home')
-    setActiveServiceId(null)
-    window.history.replaceState(null, '', window.location.pathname)
-  }
-
-  if (page === 'admin-login') {
-    return (
-      <>
-        <Login
-          onLogin={handleAdminLogin}
-          onBack={() => setPage('home')}
-        />
-        <InstallPrompt />
-      </>
-    )
-  }
-
-  if (page === 'admin' && isAdminLoggedIn) {
-    return (
-      <>
-        <AdminDashboard
-          heroBackgrounds={heroBackgrounds}
-          onSaveHero={persist('hero', setHeroBackgrounds)}
-          services={services}
-          onSaveServices={persist('services', setServices)}
-          galleryImages={galleryImages}
-          onSaveGallery={persist('gallery', setGalleryImages)}
-          aboutCards={aboutCards}
-          onSaveAbout={persist('about', setAboutCards)}
-          reviews={reviews}
-          onSaveReviews={persist('reviews', setReviews)}
-          contactInfo={contactInfo}
-          onSaveContact={persist('contact', setContactInfo)}
-          onLogout={handleAdminLogout}
-        />
-        <InstallPrompt />
-      </>
-    )
-  }
+  const isAdmin = location.pathname === '/admin'
 
   return (
-    <div className="page">
-      {!activeService && (
-        <Selector services={services} onSelect={setActiveServiceId} loaded={dataLoaded} />
-      )}
-
-      {activeService && (
-        <>
-          {page === 'home' && (
-            <main className="experience">
-              <Home
-                title={activeService.name}
-                summary={activeService.summary}
-                packages={activeService.packages}
-                heroBackground={heroBackgrounds[activeService.id]}
-                reviews={reviews}
-                contactInfo={contactInfo}
-                onNavigateServices={navigateToServices}
-                onNavigateAbout={navigateToAbout}
-                onNavigateContact={navigateToContact}
-                onChangeExperience={handleChangeExperience}
-              />
-            </main>
-          )}
-          {page === 'services' && (
-            <ServicesPage
-              service={activeService}
-              onNavigateHomeSection={navigateToHomeSection}
-              onNavigateServices={navigateToServices}
-              onNavigateAbout={navigateToAbout}
-              onNavigateContact={navigateToContact}
-              onSelectPackage={handleSelectPackage}
-              onChangeExperience={handleChangeExperience}
+    <div className={isAdmin ? undefined : 'page'}>
+      <ScrollToTop />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <SelectorRoute
+              services={services}
+              selectorBackground={selectorBackground}
+              dataLoaded={dataLoaded}
             />
-          )}
-          {page === 'about' && (
-            <AboutPage
-              cards={aboutCards}
-              gallery={galleryImages}
-              onNavigateHomeSection={navigateToHomeSection}
-              onNavigateServices={navigateToServices}
-              onNavigateContact={navigateToContact}
-              onChangeExperience={handleChangeExperience}
-            />
-          )}
-          {page === 'contact' && (
-            <ContactPage
-              service={activeService}
+          }
+        />
+        <Route
+          path="/admin"
+          element={<AdminRoute isAdminLoggedIn={isAdminLoggedIn} dashboardProps={dashboardProps} />}
+        />
+        <Route
+          path="/:serviceSlug"
+          element={
+            <HomeRoute
+              services={services}
+              heroBackgrounds={heroBackgrounds}
+              reviews={reviews}
               contactInfo={contactInfo}
-              selectedPackage={selectedPackage}
-              onNavigateHomeSection={navigateToHomeSection}
-              onNavigateServices={navigateToServices}
-              onNavigateAbout={navigateToAbout}
-              onChangeExperience={handleChangeExperience}
             />
-          )}
-          <FloatingContact contactInfo={contactInfo} />
-        </>
-      )}
+          }
+        />
+        <Route
+          path="/:serviceSlug/services"
+          element={<ServicesRoute services={services} contactInfo={contactInfo} />}
+        />
+        <Route
+          path="/:serviceSlug/about"
+          element={
+            <AboutRoute
+              services={services}
+              aboutCards={aboutCards}
+              galleryImages={galleryImages}
+              contactInfo={contactInfo}
+            />
+          }
+        />
+        <Route
+          path="/:serviceSlug/contact"
+          element={<ContactRoute services={services} contactInfo={contactInfo} />}
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   )
 }

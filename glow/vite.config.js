@@ -48,8 +48,11 @@ export default defineConfig({
         ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // SPA: any unknown route falls back to index.html (client-side routing,
-        // including /admin).
+        // including /admin) — except real static files that must be served as-is
+        // (sitemap.xml and robots.txt for crawlers), so the service worker
+        // doesn't hand back index.html for them.
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/sitemap\.xml$/, /^\/robots\.txt$/],
         cleanupOutdatedCaches: true,
       },
       devOptions: {
