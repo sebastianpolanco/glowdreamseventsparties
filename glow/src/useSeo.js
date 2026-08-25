@@ -7,7 +7,7 @@ const SITE_ORIGIN = 'https://glowdreamspartiesandevents.com'
 // Client-side SEO: React renders the pages, so each route sets its own <title>,
 // meta description and canonical link at runtime. Googlebot renders JS, so it
 // picks these up per URL. Elements are created once and reused across routes.
-export default function useSeo({ title, description, path }) {
+export default function useSeo({ title, description, path, noindex = false }) {
   useEffect(() => {
     if (title) document.title = title
     if (description) setMetaTag('description', description)
@@ -17,7 +17,8 @@ export default function useSeo({ title, description, path }) {
     setMetaProperty('og:url', `${SITE_ORIGIN}${canonicalPath}`)
     if (title) setMetaProperty('og:title', title)
     if (description) setMetaProperty('og:description', description)
-  }, [title, description, path])
+    setRobots(noindex)
+  }, [title, description, path, noindex])
 }
 
 function setMetaTag(name, content) {
@@ -48,4 +49,21 @@ function setCanonical(href) {
     document.head.appendChild(el)
   }
   el.setAttribute('href', href)
+}
+
+// Rutas privadas (admin) que no deben llegar al indice. El <head> sobrevive a
+// la navegacion client-side, asi que la etiqueta se retira al volver a una
+// ruta publica; si no, el noindex se quedaria pegado en todo el sitio.
+function setRobots(noindex) {
+  let el = document.head.querySelector('meta[name="robots"]')
+  if (!noindex) {
+    if (el) el.remove()
+    return
+  }
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute('name', 'robots')
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', 'noindex, nofollow')
 }

@@ -13,9 +13,13 @@ function Selector({ services, onSelect, loaded = true, background = '' }) {
       <header className="selector__overlay">
         <img className="selector__logo" src="/logo.png" alt="Glow Dreams" />
         <p className="lead">
-          Choose the perfect experience for your celebration. Every package is
-          thoughtfully designed to create magical moments and unforgettable
-          memories.
+          <span className="lead__highlight">
+            Choose the perfect experience for your celebration.
+          </span>
+          <span className="lead__line">
+            Every package is thoughtfully designed to create magical moments
+          </span>
+          <span className="lead__line">and unforgettable memories.</span>
         </p>
       </header>
       <div

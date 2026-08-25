@@ -52,7 +52,7 @@
   inset: 0;
   display: grid;
   place-content: start center;
-  gap: 12px;
+  gap: 0;
   text-align: center;
   padding: 60px 16px 0;
   pointer-events: none;
@@ -60,16 +60,37 @@
 }
 
 .selector__logo {
-  width: 135px;
-  height: 135px;
+  width: 170px;
+  height: 170px;
   object-fit: contain;
-  margin: 0 auto 8px;
+  /* Negativo para compensar el aire transparente que trae el PNG del logo. */
+  margin: 0 auto 10px;
 }
 
 .selector__overlay .lead {
-  max-width: 560px;
+  max-width: min(1100px, 94vw);
   color: rgba(59, 45, 96, 0.92);
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55);
+  font-family: var(--selector-serif);
+  font-style: italic;
+  font-weight: 600;
+  /* Un solo tamano para las tres frases. Se liga al ancho del viewport para
+     que el renglon mas largo quepa siempre sin desbordar. */
+  font-size: clamp(0.9rem, 2vw, 1.5rem);
+  line-height: 1.35;
+}
+
+.selector__overlay .lead__highlight {
+  display: block;
+  white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+/* Cada frase ocupa su propio renglon: el corte de linea es fijo, no depende
+   del ancho disponible. */
+.selector__overlay .lead__line {
+  display: block;
+  white-space: nowrap;
 }
 
 .selector__grid {
@@ -112,7 +133,7 @@
   display: grid;
   place-content: center;
   gap: 14px;
-  padding: 210px 32px 0;
+  padding: clamp(350px, 48vh, 440px) 32px 0;
   text-align: center;
 }
 
@@ -2785,7 +2806,6 @@ a.contact-info-card:hover {
 }
 
 @media (max-width: 1024px) {
-  .selector__grid,
   .packages__grid,
   .about,
   .contact,
@@ -2821,7 +2841,7 @@ a.contact-info-card:hover {
   }
 
   .service-panel__content {
-    padding: 160px 24px 40px;
+    padding: clamp(320px, 44vh, 390px) 24px 40px;
   }
 
   .service-card {
@@ -3279,4 +3299,47 @@ a.contact-info-card:hover {
   /* ━━ TIPOGRAFÍA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   h2 { font-size: 1.35rem; }
   h3 { font-size: 1rem; }
+}
+
+/* ── Selector en pantallas de poca altura ──────────────────────
+   El layout de 3 columnas se conserva a partir de 769px, pero con
+   100svh bajos (portatiles compactos, movil en horizontal) el logo +
+   el parrafo + la tarjeta no caben. Se compacta por altura, no por ancho. */
+@media (min-width: 769px) and (max-height: 760px) {
+  .selector__overlay {
+    padding-top: 30px;
+  }
+
+  .service-panel__content {
+    padding-top: clamp(330px, 46vh, 380px);
+  }
+}
+
+@media (min-width: 769px) and (max-height: 560px) {
+  .selector__overlay {
+    padding-top: 12px;
+  }
+
+  .selector__logo {
+    width: 84px;
+    height: 84px;
+    margin-bottom: 0;
+  }
+
+  /* Sin alto para el parrafo: se prioriza que las tres tarjetas se vean
+     completas, igual que en el layout movil. */
+  .selector__overlay .lead {
+    display: none;
+  }
+
+  .service-panel__content {
+    padding-top: 120px;
+  }
+
+  .service-card {
+    height: auto;
+    min-height: 0;
+    padding: 16px 18px 18px;
+    gap: 8px;
+  }
 }

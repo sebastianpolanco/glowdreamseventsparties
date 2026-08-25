@@ -405,7 +405,12 @@ function ContactRoute({ services, contactInfo }) {
 
 function AdminRoute({ isAdminLoggedIn, dashboardProps }) {
   const navigate = useNavigate()
-  useSeo({ title: 'Admin | Glow Dreams', description: 'Glow Dreams admin panel.', path: '/admin' })
+  useSeo({
+    title: 'Admin | Glow Dreams',
+    description: 'Glow Dreams admin panel.',
+    path: '/admin',
+    noindex: true,
+  })
   if (!isAdminLoggedIn) {
     return (
       <>
