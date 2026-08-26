@@ -1253,6 +1253,7 @@
   border: 1px solid rgba(135, 107, 227, 0.23);
   display: grid;
   gap: 12px;
+  text-align: center;
   transition: transform 0.15s, box-shadow 0.15s, background 0.25s, border-color 0.25s;
 }
 
@@ -1272,6 +1273,7 @@
 .contact-card__head {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 14px;
 }
 
