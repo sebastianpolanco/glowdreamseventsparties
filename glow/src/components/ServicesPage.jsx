@@ -20,6 +20,19 @@ function ServicesPage({
 
   const year = new Date().getFullYear()
 
+  // Las tarjetas de paquetes alinean sus filas entre si con subgrid, asi que
+  // todas deben tener el mismo numero de filas: la frase, la lista de
+  // incluidos y el tagline se reservan si al menos un paquete los trae. El
+  // hueco vacio en los demas es lo que mantiene cada bloque a la misma altura
+  // aunque el titulo ocupe una o dos lineas.
+  const packs = service.packages || []
+  const showPhraseRow = packs.some((pack) => pack.phrase)
+  const showIncludesRow = packs.some((pack) => pack.includes && pack.includes.length > 0)
+  const showTaglineRow = packs.some((pack) => pack.tagline)
+  const menuBodyRows = 2 + (showIncludesRow ? 1 : 0)
+  const menuRows =
+    7 + menuBodyRows + (showPhraseRow ? 1 : 0) + (showTaglineRow ? 1 : 0)
+
   return (
     <main className="services-page">
       <header className="page-hero">
@@ -68,8 +81,11 @@ function ServicesPage({
           <h2>Available packages</h2>
           <p>More detail to help you choose the ideal experience.</p>
         </div>
-        <div className="services-page__grid">
-          {service.packages.map((pack) => (
+        <div
+          className="services-page__grid"
+          style={{ '--menu-rows': menuRows, '--menu-body-rows': menuBodyRows }}
+        >
+          {packs.map((pack) => (
             <article key={pack.name} className="menu-card">
               {pack.image
                 ? <img className="menu-card__image" src={pack.image} alt={pack.name} />
@@ -79,7 +95,7 @@ function ServicesPage({
 
               <hr className="menu-card__rule" />
 
-              {pack.phrase && (
+              {showPhraseRow && (
                 <p className="menu-card__phrase">{pack.phrase}</p>
               )}
 
@@ -88,9 +104,9 @@ function ServicesPage({
               <div className="menu-card__body">
                 <span className="menu-card__includes-label">Includes:</span>
                 <p className="menu-card__detail">{pack.detail}</p>
-                {pack.includes.length > 0 && (
+                {showIncludesRow && (
                   <ul className="menu-card__list">
-                    {pack.includes.map((item) => (
+                    {(pack.includes || []).map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
@@ -108,7 +124,7 @@ function ServicesPage({
                 )}
               </div>
 
-              {pack.tagline && (
+              {showTaglineRow && (
                 <p className="menu-card__tagline">{pack.tagline}</p>
               )}
 

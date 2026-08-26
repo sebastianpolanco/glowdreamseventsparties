@@ -859,14 +859,10 @@
 }
 
 .packages-summary {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
   justify-content: center;
   gap: 20px;
-}
-
-.package-summary-card {
-  flex: 0 1 320px;
 }
 
 .package-summary-card {
@@ -877,7 +873,19 @@
   border: 1px solid rgba(135, 107, 227, 0.28);
   display: grid;
   gap: 12px;
+  text-align: center;
   transition: transform 0.15s, box-shadow 0.15s, background 0.25s, border-color 0.25s;
+}
+
+/* Alinea las filas entre tarjetas: aunque el titulo ocupe una o dos lineas y
+   las descripciones tengan largos distintos, cada bloque arranca a la misma
+   altura en las tres. Sin soporte de subgrid cada tarjeta se apila por su
+   cuenta, como antes. */
+@supports (grid-template-rows: subgrid) {
+  .package-summary-card {
+    grid-row: span var(--summary-rows, 5);
+    grid-template-rows: subgrid;
+  }
 }
 
 .package-summary-card:hover {
@@ -2293,15 +2301,28 @@
 }
 
 .services-page__grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
   justify-content: center;
   gap: 24px;
-  align-items: stretch;
 }
 
-.services-page__grid .menu-card {
-  flex: 0 1 340px;
+/* Alinea las filas entre tarjetas: el titulo, la frase, los incluidos, el
+   precio y el boton arrancan a la misma altura aunque los textos tengan
+   largos distintos. Sin soporte de subgrid cada tarjeta se apila por su
+   cuenta (columna flex), como antes. */
+@supports (grid-template-rows: subgrid) {
+  .services-page__grid .menu-card {
+    display: grid;
+    grid-row: span var(--menu-rows, 12);
+    grid-template-rows: subgrid;
+  }
+
+  .services-page__grid .menu-card__body {
+    display: grid;
+    grid-row: span var(--menu-body-rows, 3);
+    grid-template-rows: subgrid;
+  }
 }
 
 /* ── Menu-style package card ─────────────── */
@@ -2344,11 +2365,9 @@
 
 .menu-card__title {
   font-family: var(--heading);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 600;
   color: var(--text);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   line-height: 1.35;
   margin: 0 0 20px;
 }
@@ -2363,7 +2382,7 @@
   font-style: italic;
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--text);
+  color: var(--text-soft);
   margin: 0 0 18px;
   line-height: 1.5;
 }
@@ -2384,10 +2403,11 @@
 }
 
 .menu-card__detail {
-  font-style: italic;
-  font-size: 0.92rem;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 1rem;
   color: var(--text);
-  line-height: 1.65;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -2403,7 +2423,7 @@
 .menu-card__list li {
   font-style: italic;
   font-size: 0.88rem;
-  color: var(--text);
+  color: var(--text-soft);
   line-height: 1.5;
 }
 
@@ -2415,8 +2435,9 @@
 }
 
 .menu-card__pricing p {
-  font-style: italic;
-  font-size: 0.92rem;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 1rem;
   color: var(--text);
   margin: 0;
 }
@@ -2427,9 +2448,9 @@
 
 .menu-card__tagline {
   font-style: italic;
-  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text);
+  font-size: 0.95rem;
+  color: var(--text-soft);
   margin: 0 0 22px;
   line-height: 1.5;
 }
@@ -2819,12 +2840,12 @@ a.contact-info-card:hover {
     grid-template-columns: 1fr;
   }
 
-  .packages-summary .package-summary-card {
-    flex: 0 1 100%;
+  .packages-summary {
+    grid-template-columns: minmax(0, 420px);
   }
 
-  .services-page__grid .menu-card {
-    flex-basis: 100%;
+  .services-page__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .page-hero__top {
@@ -3174,13 +3195,8 @@ a.contact-info-card:hover {
 
   /* Packages: una tarjeta por fila, adaptada al ancho y centrada */
   .services-page__grid {
+    grid-template-columns: minmax(0, 420px);
     justify-content: center;
-  }
-
-  .services-page__grid .menu-card {
-    flex: 0 1 100%;
-    max-width: 420px;
-    width: 100%;
   }
 
   .menu-card { padding: 36px 18px 22px; }
@@ -3247,6 +3263,9 @@ a.contact-info-card:hover {
     flex: 0 0 72vw;
     max-width: 300px;
     scroll-snap-align: start;
+    /* El carrusel es flex: aqui no hay filas de contenedor que compartir. */
+    grid-row: auto;
+    grid-template-rows: none;
   }
 
   .contact-cards { grid-template-columns: 1fr !important; }

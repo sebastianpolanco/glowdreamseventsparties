@@ -15,6 +15,16 @@ function Home({
   const year = new Date().getFullYear()
   const previewPackages = packages
 
+  // Las tarjetas de resumen alinean sus filas entre si con subgrid, asi que
+  // todas deben tener el mismo numero de filas. La frase y la lista de
+  // incluidos se reservan si al menos un paquete las trae; el hueco vacio en
+  // los demas es lo que mantiene el boton y la lista a la misma altura.
+  const showPhraseRow = previewPackages.some((pack) => pack.phrase)
+  const showIncludesRow = previewPackages.some(
+    (pack) => pack.includes && pack.includes.length > 0
+  )
+  const summaryRows = 3 + (showPhraseRow ? 1 : 0) + (showIncludesRow ? 1 : 0)
+
   const images = Array.isArray(heroBackground)
     ? heroBackground.filter(Boolean)
     : [heroBackground].filter(Boolean)
@@ -220,15 +230,20 @@ function Home({
           </ul>
         </article>
 
-        <div className="packages-summary">
+        <div
+          className="packages-summary"
+          style={{ '--summary-rows': summaryRows }}
+        >
           {previewPackages.map((pack) => (
             <article key={pack.name} className="package-summary-card">
               <h3>{pack.name}</h3>
-              {pack.phrase && <p className="package-summary-card__phrase">{pack.phrase}</p>}
+              {showPhraseRow && (
+                <p className="package-summary-card__phrase">{pack.phrase}</p>
+              )}
               <p>{pack.detail}</p>
-              {pack.includes && pack.includes.length > 0 && (
+              {showIncludesRow && (
                 <ul className="package-summary-card__includes">
-                  {pack.includes.map((item) => (
+                  {(pack.includes || []).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
