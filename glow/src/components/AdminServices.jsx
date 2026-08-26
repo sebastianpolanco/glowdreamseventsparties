@@ -11,7 +11,6 @@ const EMPTY_PACKAGE = {
   price: '',
   additionalPrice: '',
   image: '',
-  includes: [],
 }
 
 const EMPTY_ADDITION = { title: '', price: '', description: '', image: '' }

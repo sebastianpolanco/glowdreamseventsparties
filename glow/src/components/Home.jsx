@@ -16,14 +16,11 @@ function Home({
   const previewPackages = packages
 
   // Las tarjetas de resumen alinean sus filas entre si con subgrid, asi que
-  // todas deben tener el mismo numero de filas. La frase y la lista de
-  // incluidos se reservan si al menos un paquete las trae; el hueco vacio en
-  // los demas es lo que mantiene el boton y la lista a la misma altura.
+  // todas deben tener el mismo numero de filas. La frase se reserva si al
+  // menos un paquete la trae; el hueco vacio en los demas es lo que mantiene
+  // el boton a la misma altura.
   const showPhraseRow = previewPackages.some((pack) => pack.phrase)
-  const showIncludesRow = previewPackages.some(
-    (pack) => pack.includes && pack.includes.length > 0
-  )
-  const summaryRows = 3 + (showPhraseRow ? 1 : 0) + (showIncludesRow ? 1 : 0)
+  const summaryRows = 3 + (showPhraseRow ? 1 : 0)
 
   const images = Array.isArray(heroBackground)
     ? heroBackground.filter(Boolean)
@@ -241,14 +238,7 @@ function Home({
                 <p className="package-summary-card__phrase">{pack.phrase}</p>
               )}
               <p>{pack.detail}</p>
-              {showIncludesRow && (
-                <ul className="package-summary-card__includes">
-                  {(pack.includes || []).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              )}
-              <button type="button" className="ghost" onClick={onNavigateServices}>
+              <button type="button" className="primary" onClick={onNavigateServices}>
                 Details
               </button>
             </article>

@@ -910,21 +910,6 @@
   margin: 0;
 }
 
-.package-summary-card__includes {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.package-summary-card__includes li {
-  font-size: 0.88rem;
-  color: var(--text-soft);
-  font-style: italic;
-}
-
 .home-section--review {
   background: transparent;
   padding: 48px min(6vw, 80px);
@@ -2322,7 +2307,7 @@
 
   .services-page__grid .menu-card__body {
     display: grid;
-    grid-row: span var(--menu-body-rows, 3);
+    grid-row: span 2;
     grid-template-rows: subgrid;
   }
 }
@@ -2411,22 +2396,6 @@
   color: var(--text);
   line-height: 1.6;
   margin: 0;
-}
-
-.menu-card__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.menu-card__list li {
-  font-style: italic;
-  font-size: 0.88rem;
-  color: var(--text-soft);
-  line-height: 1.5;
 }
 
 .menu-card__pricing {
