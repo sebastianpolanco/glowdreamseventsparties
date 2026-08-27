@@ -29,11 +29,13 @@ function AdminReviews({ data, onSave }) {
   const [googleUrl, setGoogleUrl] = useState(initial.googleUrl || '')
   const [writeUrl, setWriteUrl] = useState(initial.writeUrl || '')
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
   const confirm = useConfirm()
 
   // Build the full section payload from the given reviews list (defaults to
   // current state) plus the shared Google links.
   const save = async (nextReviews = reviews) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave({
@@ -44,6 +46,7 @@ function AdminReviews({ data, onSave }) {
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -119,7 +122,7 @@ function AdminReviews({ data, onSave }) {
         <p className="admin-empty-msg">No reviews yet. Click "+ Add Review" to add one.</p>
       )}
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

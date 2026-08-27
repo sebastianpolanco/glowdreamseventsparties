@@ -5,17 +5,20 @@ import AdminToast from './AdminToast'
 function AdminAbout({ data, onSave }) {
   const [cards, setCards] = useState(data.map((c) => ({ ...c })))
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
 
   const update = (idx, field, value) =>
     setCards(cards.map((c, i) => (i !== idx ? c : { ...c, [field]: value })))
 
   const save = async (next) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -53,7 +56,7 @@ function AdminAbout({ data, onSave }) {
         ))}
       </div>
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

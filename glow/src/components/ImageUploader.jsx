@@ -1,37 +1,5 @@
 import { useState, useRef } from 'react'
-
-const MAX_PX = 900
-const QUALITY = 0.62
-
-function compressToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = reject
-    reader.onload = (e) => {
-      const img = new Image()
-      img.onerror = reject
-      img.onload = () => {
-        let { width, height } = img
-        if (width > MAX_PX || height > MAX_PX) {
-          if (width >= height) {
-            height = Math.round((height * MAX_PX) / width)
-            width = MAX_PX
-          } else {
-            width = Math.round((width * MAX_PX) / height)
-            height = MAX_PX
-          }
-        }
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', QUALITY))
-      }
-      img.src = e.target.result
-    }
-    reader.readAsDataURL(file)
-  })
-}
+import { compressFile } from '../imageCompression'
 
 function ImageUploader({ value, onChange }) {
   const [compressing, setCompressing] = useState(false)
@@ -44,8 +12,7 @@ function ImageUploader({ value, onChange }) {
     setError(null)
     setCompressing(true)
     try {
-      const b64 = await compressToBase64(file)
-      onChange(b64)
+      onChange(await compressFile(file))
     } catch {
       setError('Could not process image. Try another file.')
     } finally {

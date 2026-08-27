@@ -23,15 +23,18 @@ function AdminServices({ data, onSave }) {
   })))
   const [activeIdx, setActiveIdx] = useState(0)
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
   const confirm = useConfirm()
 
   const save = async (next) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -249,7 +252,7 @@ function AdminServices({ data, onSave }) {
         <p className="admin-empty-msg">No add-ons yet. Click "+ Add Add-on" to create one.</p>
       )}
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

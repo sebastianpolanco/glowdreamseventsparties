@@ -4,16 +4,19 @@ import AdminToast from './AdminToast'
 function AdminContact({ data, onSave }) {
   const [form, setForm] = useState({ ...data })
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
 
   const save = async () => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(form)
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -68,7 +71,7 @@ function AdminContact({ data, onSave }) {
         </div>
       </div>
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

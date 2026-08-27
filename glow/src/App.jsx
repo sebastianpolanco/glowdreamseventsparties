@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
-import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { db, auth } from './firebase'
+import { approxDocBytes, FIRESTORE_DOC_LIMIT } from './imageCompression'
 import AboutPage from './components/AboutPage'
 import ContactPage from './components/ContactPage'
 import Home from './components/Home'
@@ -212,6 +213,13 @@ const DEFAULT_CONTACT_INFO = {
 }
 
 const siteDoc = (field) => doc(db, 'site', field)
+
+// Hero images used to live together in a single site/hero document. Three
+// experiences' worth of Base64 slides pushed it to ~958 KB of Firestore's
+// 1,048,487-byte ceiling, so every new upload was rejected. Each experience now
+// owns its own document and gets the full budget to itself.
+const HERO_DOC_PREFIX = 'hero-'
+const heroDocId = (serviceId) => `${HERO_DOC_PREFIX}${serviceId}`
 
 // SEO-friendly URL slug for each experience id. New/renamed experiences fall
 // back to their raw id as the slug, so links keep working even if the owner
@@ -461,12 +469,22 @@ function App() {
     const unsubscribe = onSnapshot(
       collection(db, 'site'),
       (snapshot) => {
+        // Hero is assembled from two layouts at once: the legacy site/hero map
+        // and the per-experience site/hero-<id> docs, which win. Collect both
+        // before setting state so the result never depends on snapshot order.
+        let legacyHero = null
+        const perServiceHero = {}
+
         snapshot.forEach((snap) => {
           const d = snap.data()?.data
           if (!d) return
+          if (snap.id.startsWith(HERO_DOC_PREFIX)) {
+            perServiceHero[snap.id.slice(HERO_DOC_PREFIX.length)] = d
+            return
+          }
           switch (snap.id) {
             case 'selector': setSelectorBackground(d); break
-            case 'hero':     setHeroBackgrounds(d); break
+            case 'hero':     legacyHero = d;          break
             case 'services': setServices(d);        break
             case 'gallery':  setGalleryImages(d);   break
             case 'about':    setAboutCards(d);       break
@@ -474,6 +492,10 @@ function App() {
             case 'contact':  setContactInfo(d);      break
           }
         })
+
+        if (legacyHero || Object.keys(perServiceHero).length) {
+          setHeroBackgrounds({ ...legacyHero, ...perServiceHero })
+        }
         setDataLoaded(true)
       },
       (err) => {
@@ -493,18 +515,54 @@ function App() {
     document.body.classList.toggle('selector-active', lockScroll)
   }, [location.pathname])
 
-  // Each section is saved to its own Firestore document: site/hero, site/services, etc.
-  // This keeps each doc well under the 1 MB limit even with Base64 images.
+  // Each section is saved to its own Firestore document: site/services,
+  // site/gallery, etc. Base64 images make the 1 MB per-document ceiling
+  // reachable, so check before writing and fail with a message that says what
+  // actually went wrong instead of letting the generic error blame the rules.
+  const guardSize = (label, data) => {
+    const bytes = approxDocBytes(data)
+    if (bytes <= FIRESTORE_DOC_LIMIT) return
+    const err = new Error(
+      `${label} is ${Math.round(bytes / 1024)} KB and Firestore stores at most ` +
+      `${Math.round(FIRESTORE_DOC_LIMIT / 1024)} KB per section. Remove an image or run "Optimize images".`
+    )
+    err.code = 'doc-too-large'
+    throw err
+  }
+
+  // State is updated only after Firestore accepts the write, so a rejected save
+  // never leaves the live site showing an image that was not stored.
   const persist = (field, setter) => async (data) => {
-    setter(data)
+    guardSize('This section', data)
     await setDoc(siteDoc(field), { data })
+    setter(data)
+  }
+
+  const persistHero = async (data) => {
+    Object.entries(data).forEach(([serviceId, images]) =>
+      guardSize(services.find((s) => s.id === serviceId)?.name || serviceId, images)
+    )
+
+    const batch = writeBatch(db)
+    Object.entries(data).forEach(([serviceId, images]) => {
+      batch.set(siteDoc(heroDocId(serviceId)), { data: images })
+    })
+    await batch.commit()
+    setHeroBackgrounds(data)
+
+    // The legacy single-document layout has just been fully superseded by the
+    // per-experience docs above. Dropping it stops every visitor downloading a
+    // ~1 MB dead copy; a failure here is cosmetic, so it must not fail the save.
+    deleteDoc(siteDoc('hero')).catch((err) =>
+      console.warn('Could not remove the legacy site/hero document:', err)
+    )
   }
 
   const dashboardProps = {
     selectorBackground,
     onSaveSelector: persist('selector', setSelectorBackground),
     heroBackgrounds,
-    onSaveHero: persist('hero', setHeroBackgrounds),
+    onSaveHero: persistHero,
     services,
     onSaveServices: persist('services', setServices),
     galleryImages,

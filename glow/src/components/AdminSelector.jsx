@@ -5,6 +5,7 @@ import AdminToast from './AdminToast'
 function AdminSelector({ data, onSave }) {
   const [image, setImage] = useState(data || '')
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
 
   // Firestore delivers the saved image asynchronously, after this component has
   // already mounted with the default. Re-sync whenever the incoming data changes.
@@ -15,12 +16,14 @@ function AdminSelector({ data, onSave }) {
   }
 
   const save = async (next) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -59,7 +62,7 @@ function AdminSelector({ data, onSave }) {
         </div>
       </div>
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

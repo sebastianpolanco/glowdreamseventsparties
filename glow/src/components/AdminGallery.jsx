@@ -6,15 +6,18 @@ import AdminToast from './AdminToast'
 function AdminGallery({ data, onSave }) {
   const [images, setImages] = useState([...data])
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
   const confirm = useConfirm()
 
   const save = async (next) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(next.filter(Boolean))
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
@@ -64,7 +67,7 @@ function AdminGallery({ data, onSave }) {
         <p className="admin-empty-msg">No images yet. Click "+ Add Image" to add one.</p>
       )}
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

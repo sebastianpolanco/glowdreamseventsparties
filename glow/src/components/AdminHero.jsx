@@ -2,11 +2,32 @@ import { useState } from 'react'
 import ImageUploader from './ImageUploader'
 import { useConfirm } from './ConfirmDialog'
 import AdminToast from './AdminToast'
+import { approxDocBytes, compressDataUrl, FIRESTORE_DOC_LIMIT } from '../imageCompression'
 
 const SERVICE_LABELS = {
   'premium-experience':   'Premium Experience',
   'spa-premium':          'Spa Premium',
   'kids-wedding-lounger': 'The Kids Wedding Lounger',
+}
+
+// Each experience is stored in its own Firestore document, so the 1 MB ceiling
+// applies per experience. Surface how much of it is used — running out is what
+// made uploads fail silently before.
+function usage(images) {
+  const bytes = approxDocBytes(images)
+  return { kb: Math.round(bytes / 1024), pct: Math.round((bytes / FIRESTORE_DOC_LIMIT) * 100) }
+}
+
+function HeroServiceTitle({ label, images }) {
+  const { kb, pct } = usage(images)
+  return (
+    <h3 className="admin-section__sub-title">
+      {label} ({images.length})
+      <span className={`admin-hero-usage${pct >= 80 ? ' admin-hero-usage--full' : ''}`}>
+        {kb} KB of 1024 KB used
+      </span>
+    </h3>
+  )
 }
 
 function buildForm(data) {
@@ -20,6 +41,8 @@ function buildForm(data) {
 function AdminHero({ data, onSave }) {
   const [form, setForm] = useState(() => buildForm(data))
   const [status, setStatus] = useState(null)
+  const [error, setError] = useState(null)
+  const [optimizing, setOptimizing] = useState(false)
   const confirm = useConfirm()
 
   // Firestore delivers the real hero images asynchronously, after this
@@ -32,15 +55,39 @@ function AdminHero({ data, onSave }) {
   }
 
   const save = async (next) => {
+    setError(null)
     setStatus('saving')
     try {
       await onSave(next)
       setStatus('saved')
     } catch (err) {
       console.error(err)
+      setError(err)
       setStatus('error')
     }
     setTimeout(() => setStatus(null), 3000)
+  }
+
+  // Re-encode every stored image to the current byte budget. Images added
+  // before the budget existed weigh 150-220 KB each; this typically cuts an
+  // experience to a third of its size and is a no-op for anything already small.
+  const optimize = async () => {
+    setOptimizing(true)
+    try {
+      const next = {}
+      for (const serviceId of Object.keys(SERVICE_LABELS)) {
+        next[serviceId] = []
+        for (const src of form[serviceId]) next[serviceId].push(await compressDataUrl(src))
+      }
+      setForm(next)
+      await save(next)
+    } catch (err) {
+      console.error(err)
+      setError(err)
+      setStatus('error')
+    } finally {
+      setOptimizing(false)
+    }
   }
 
   const addImage = (serviceId, url = '') =>
@@ -61,12 +108,20 @@ function AdminHero({ data, onSave }) {
       <div className="admin-section__header">
         <h2 className="admin-section__title">Hero Images</h2>
         <p className="admin-section__sub">Add multiple images per experience — they cycle automatically every 5 seconds.</p>
+        <button
+          type="button"
+          className="admin-add-btn"
+          onClick={optimize}
+          disabled={optimizing || status === 'saving'}
+        >
+          {optimizing ? 'Optimizing…' : '⚡ Optimize images'}
+        </button>
       </div>
 
       {Object.keys(SERVICE_LABELS).map((serviceId) => (
         <div key={serviceId} className="admin-hero-service">
           <div className="admin-packages-header">
-            <h3 className="admin-section__sub-title">{SERVICE_LABELS[serviceId]} ({form[serviceId].length})</h3>
+            <HeroServiceTitle label={SERVICE_LABELS[serviceId]} images={form[serviceId]} />
             <button type="button" className="admin-add-btn" onClick={() => addImage(serviceId)}>+ Add Image</button>
           </div>
 
@@ -79,7 +134,6 @@ function AdminHero({ data, onSave }) {
                 <ImageUploader
                   value={src}
                   onChange={(url) => updateImage(serviceId, idx, url)}
-                  folder={`hero/${serviceId}`}
                 />
                 <div className="admin-card__actions">
                   <button type="button" className="admin-update-btn" onClick={() => save(form)} disabled={status === 'saving'}>↻ Update</button>
@@ -95,7 +149,7 @@ function AdminHero({ data, onSave }) {
         </div>
       ))}
 
-      <AdminToast status={status} />
+      <AdminToast status={status} error={error} />
     </section>
   )
 }

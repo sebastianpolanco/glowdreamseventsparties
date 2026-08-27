@@ -61,6 +61,14 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // Sin esto el minificador reescribe `@media (max-width: 768px)` como
+    // `@media (width <= 768px)` (sintaxis de rangos, Media Queries 4). Los
+    // navegadores que no la soportan (Chrome < 104, Safari < 16.4, Samsung
+    // Internet < 20) ignoran el bloque entero y la web se ve sin adaptar en
+    // el movil. Con un target antiguo se conserva la sintaxis clasica.
+    cssTarget: ['chrome87', 'safari13', 'firefox78', 'edge88'],
+  },
   server: {
     historyApiFallback: true,
   },

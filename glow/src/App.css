@@ -214,11 +214,16 @@
   background: transparent;
 }
 
+/* El home usa <a> para "Home" y <button class="nav__link"> para el resto;
+   los dos elementos deben medir igual (un <button> trae line-height normal y
+   un <a> hereda el 160% del body), o la barra queda mas alta en una pagina
+   que en otra al envolverse. */
 .nav a {
   text-decoration: none;
   color: var(--text);
   font-weight: 500;
   font-size: 0.95rem;
+  line-height: 1.2;
 }
 
 .nav__link {
@@ -228,6 +233,7 @@
   color: var(--text);
   font-weight: 500;
   font-size: 0.95rem;
+  line-height: 1.2;
   cursor: pointer;
 }
 
@@ -477,15 +483,17 @@
   gap: 16px;
   padding: 10px 20px;
   border-radius: 999px;
-  background: transparent;
+  /* La barra nunca es transparente: ya arranca con el fondo esmerilado.
+     Al hacer scroll solo se le suma la sombra (--scrolled). */
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: none;
   transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .hero__nav--scrolled {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 12px 30px -18px rgba(42, 34, 76, 0.5);
 }
 
@@ -500,7 +508,7 @@
 .hero__brand-title {
   font-family: var(--heading);
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text);
@@ -531,9 +539,12 @@
 .hero__content > *:nth-child(3) { animation-delay: 0.34s; }
 .hero__content > *:nth-child(4) { animation-delay: 0.46s; }
 
+/* Mismo tamano que .page-brand img para que la barra mida igual en todas
+   las paginas. El logo grande del hero usa .hero__logo--center, que se
+   define mas abajo y sobreescribe estas medidas. */
 .hero__logo {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 
@@ -860,7 +871,10 @@
 
 .packages-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  /* Siempre 3 por fila en escritorio: el max fija el ancho comodo y el min 0
+     deja que las columnas se encojan juntas en pantallas mas angostas en vez
+     de romper la fila. */
+  grid-template-columns: repeat(3, minmax(0, 320px));
   justify-content: center;
   gap: 20px;
 }
@@ -1851,7 +1865,26 @@
 }
 .admin-toast--saving { color: var(--accent-strong); }
 .admin-toast--saved  { color: #2e9e5b; }
-.admin-toast--error  { color: #c0392b; }
+
+/* Errors now carry a full sentence explaining the cause, so the pill becomes a
+   wrapping card instead of stretching across the viewport. */
+.admin-toast--error {
+  color: #c0392b;
+  max-width: min(380px, calc(100vw - 48px));
+  border-radius: 16px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* Remaining room in this experience's Firestore document. */
+.admin-hero-usage {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(42, 34, 76, 0.5);
+}
+.admin-hero-usage--full { color: #c0392b; }
 
 .admin-add-row {
   display: flex;
@@ -2213,6 +2246,7 @@
 .page-hero {
   padding: 0 min(6vw, 80px) 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
 }
 
@@ -2228,15 +2262,17 @@
   gap: 16px;
   padding: 10px 20px;
   border-radius: 999px;
-  background: transparent;
+  /* La barra nunca es transparente: ya arranca con el fondo esmerilado.
+     Al hacer scroll solo se le suma la sombra (--scrolled). */
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   box-shadow: none;
   transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .page-hero__top--scrolled {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 12px 30px -18px rgba(42, 34, 76, 0.5);
 }
 
@@ -2289,7 +2325,8 @@
 
 .services-page__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+  /* Siempre 3 por fila en escritorio (ver .packages-summary). */
+  grid-template-columns: repeat(3, minmax(0, 340px));
   justify-content: center;
   gap: 24px;
 }
@@ -2542,6 +2579,10 @@
   background: linear-gradient(120deg, #ece7f9 0%, #f5eaf7 50%, #fde9f2 100%);
   background-attachment: fixed;
   display: grid;
+  /* minmax(0, 1fr) y no el `auto` implicito: una pista auto nunca baja del
+     min-content de su contenido, asi que un hijo ancho desborda la pagina
+     entera en vez de encogerse. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 48px;
   padding-bottom: 24px;
 }
@@ -2647,13 +2688,14 @@
 .contact-page__content {
   padding: 0 min(6vw, 80px);
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
 
 .contact-page__info {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -2662,6 +2704,7 @@
   padding: 28px 24px;
   box-shadow: var(--shadow-soft);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   background: #ffffff;
   border: 1px solid rgba(135, 107, 227, 0.18);
@@ -2712,6 +2755,7 @@ a.contact-info-card:hover {
 
 .contact-page__form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   background: linear-gradient(135deg, rgba(109, 79, 206, 0.19) 0%, rgba(249, 116, 179, 0.15) 40%, #ffffff 75%);
   border: 1px solid rgba(135, 107, 227, 0.28);
@@ -2770,6 +2814,12 @@ a.contact-info-card:hover {
 .contact-page__form input,
 .contact-page__form select,
 .contact-page__form textarea {
+  /* Sin ancho explicito un campo aporta un min-content de ~20 caracteres.
+     Con el texto ampliado (ajuste de accesibilidad del navegador) eso supera
+     el ancho de la pantalla y arrastra a todo el grid, que se hace mas ancho
+     que el viewport. */
+  width: 100%;
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid rgba(135, 107, 227, 0.47);
   padding: 11px 14px;
@@ -2808,14 +2858,6 @@ a.contact-info-card:hover {
   .about-page__cards,
   .contact-page__content,
   .services-additions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .packages-summary {
-    grid-template-columns: minmax(0, 420px);
-  }
-
-  .services-page__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -3093,8 +3135,10 @@ a.contact-info-card:hover {
     overflow: hidden;
   }
 
+  .hero__logo { width: 32px; height: 32px; }
+
   .hero__brand-title {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3136,6 +3180,13 @@ a.contact-info-card:hover {
   .page-hero h1 {
     font-size: 1.3rem;
     margin-top: 16px;
+  }
+
+  /* Misma posicion que la capsula del home (.hero__nav) en movil */
+  .page-hero__top {
+    top: 12px;
+    left: 16px;
+    right: 16px;
   }
 
   /* La marca se encoge/trunca para no tapar el botón hamburguesa */
@@ -3234,9 +3285,19 @@ a.contact-info-card:hover {
     flex: 0 0 72vw;
     max-width: 300px;
     scroll-snap-align: start;
-    /* El carrusel es flex: aqui no hay filas de contenedor que compartir. */
+    /* El carrusel es flex: aqui no hay filas de contenedor que compartir.
+       Se pasa a columna flex porque en grid las tarjetas se estiran a la
+       altura de la mas alta y el sobrante se reparte entre las filas, lo que
+       agrandaba el boton en las tarjetas con menos texto. En flex el boton
+       conserva su alto natural y margin-top: auto lo baja al pie. */
+    display: flex;
+    flex-direction: column;
     grid-row: auto;
     grid-template-rows: none;
+  }
+
+  .packages-summary .package-summary-card .primary {
+    margin-top: auto;
   }
 
   .contact-cards { grid-template-columns: 1fr !important; }
@@ -3280,6 +3341,32 @@ a.contact-info-card:hover {
   .review-card__quote {
     font-size: 1rem;
     line-height: 1.6;
+  }
+
+  /* ━━ CONTACT PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  /* No tenia reglas moviles: heredaba el gutter y los paddings de escritorio,
+     asi que las tarjetas y el formulario quedaban estrechos y muy separados. */
+  .contact-page { gap: 28px; }
+
+  .contact-page__content {
+    padding: 0 16px;
+    gap: 16px;
+  }
+
+  .contact-page__info { gap: 12px; }
+
+  .contact-info-card { padding: 18px 16px; }
+
+  .contact-page__form {
+    padding: 22px 18px;
+    border-radius: 18px;
+  }
+
+  /* 16px es el minimo para que iOS no haga zoom al enfocar un campo. */
+  .contact-page__form input,
+  .contact-page__form select,
+  .contact-page__form textarea {
+    font-size: 1rem;
   }
 
   /* ━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
